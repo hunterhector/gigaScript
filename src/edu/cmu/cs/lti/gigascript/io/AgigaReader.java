@@ -4,8 +4,6 @@ import edu.jhu.agiga.AgigaDocument;
 import edu.jhu.agiga.AgigaPrefs;
 import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.StreamingDocumentReader;
-import edu.stanford.nlp.trees.semgraph.SemanticGraph;
-import edu.stanford.nlp.trees.semgraph.SemanticGraphFactory;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,21 +12,29 @@ import edu.stanford.nlp.trees.semgraph.SemanticGraphFactory;
  * Time: 2:25 PM
  */
 public class AgigaReader {
+    public static void main(String[] argv) {
+        String path = "/Users/hector/Downloads/nyt_eng_199407.xml.gz";
 
-    public static void readSingleAgigaZip(String filePath) {
-        StreamingDocumentReader reader = new StreamingDocumentReader(filePath, new AgigaPrefs());
+        long startTime = System.currentTimeMillis();
+
+        AgigaPrefs prefs = new AgigaPrefs();
+        prefs.setAll(true);
+
+        System.out.println("Parsing XML...");
+
+        System.out.println("Number of documents processed:");
+        StreamingDocumentReader reader = new StreamingDocumentReader(path, prefs);
         for (AgigaDocument doc : reader) {
             for (AgigaSentence sent : doc.getSents()) {
-                SemanticGraph graph = SemanticGraphFactory.makeFromTree(sent.getStanfordContituencyTree());
-                System.out.print(graph.toFormattedString());
             }
+            System.out.print("\r"+reader.getNumDocs());
         }
-    }
+        System.out.println();
 
-
-    public static void main(String[] argv){
-        String path = "/Users/hector/Downloads/nyt_eng_199407.xml.gz";
-        readSingleAgigaZip(path);
+        long totalTime = System.currentTimeMillis() - startTime;
+        System.out.println(String.format("Number of files : %d",reader.getNumDocs()));
+        System.out.println(String.format("Number of sentences : %d", reader.getNumSents()));
+        System.out.println("Overall processing time takes " + totalTime / 6e4 + " minutes");
     }
 
 }
