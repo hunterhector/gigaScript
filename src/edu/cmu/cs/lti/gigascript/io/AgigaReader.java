@@ -5,6 +5,11 @@ import edu.jhu.agiga.AgigaPrefs;
 import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.StreamingDocumentReader;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Hector, Zhengzhong Liu
@@ -12,8 +17,8 @@ import edu.jhu.agiga.StreamingDocumentReader;
  * Time: 2:25 PM
  */
 public class AgigaReader {
-    public static void main(String[] argv) {
-        String path = "/Users/hector/Downloads/nyt_eng_199407.xml.gz";
+    public static void main(String[] argv) throws FileNotFoundException {
+        String path = System.getProperty("user.home") + "/Downloads/nyt_eng_199407.xml.gz";
 
         long startTime = System.currentTimeMillis();
 
@@ -24,17 +29,21 @@ public class AgigaReader {
 
         System.out.println("Number of documents processed:");
         StreamingDocumentReader reader = new StreamingDocumentReader(path, prefs);
+
+        FileOutputStream sentenceOut = new FileOutputStream(new File("sentences.txt"));
+        PrintStream out = new PrintStream(sentenceOut);
+
         for (AgigaDocument doc : reader) {
             for (AgigaSentence sent : doc.getSents()) {
+                IOUtils.printSentence(sent, out);
             }
-            System.out.print("\r"+reader.getNumDocs());
+            System.out.print("\r" + reader.getNumDocs());
         }
         System.out.println();
 
         long totalTime = System.currentTimeMillis() - startTime;
-        System.out.println(String.format("Number of files : %d",reader.getNumDocs()));
+        System.out.println(String.format("Number of files : %d", reader.getNumDocs()));
         System.out.println(String.format("Number of sentences : %d", reader.getNumSents()));
         System.out.println("Overall processing time takes " + totalTime / 6e4 + " minutes");
     }
-
 }

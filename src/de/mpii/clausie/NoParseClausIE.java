@@ -1,12 +1,11 @@
 package de.mpii.clausie;
 
+import edu.cmu.cs.lti.gigascript.io.IOUtils;
 import edu.jhu.agiga.*;
 import edu.stanford.nlp.pipeline.ParserAnnotatorUtils;
 import edu.stanford.nlp.trees.Tree;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,12 +27,16 @@ public class NoParseClausIE extends ClausIE {
     }
 
     public static void main(String[] argv) throws IOException {
-        String path = "/Users/hector/Downloads/nyt_eng_199407.xml.gz";
+        String path = System.getProperty("user.home") + "/Downloads/nyt_eng_199407.xml.gz";
         StreamingDocumentReader reader = new StreamingDocumentReader(path, new AgigaPrefs());
 
         OutputStream out = System.out;
 
+        FileOutputStream errorOutStream = new FileOutputStream(new File("error.txt"));
+
         PrintStream dout = new PrintStream(out);
+
+        PrintStream eout = new PrintStream(errorOutStream);
 
         NoParseClausIE npClauseIe = new NoParseClausIE();
 
@@ -51,11 +54,7 @@ public class NoParseClausIE extends ClausIE {
 //        System.out.println("Reading one gzip takes " + (readingTime - startTime) / 6e4 + " minutes");
 
 
-        int i = 0;
         for (AgigaDocument doc : reader) {
-            i++;
-            System.out.println(i);
-
             for (AgigaSentence sent : doc.getSents()) {
 
                 try {
@@ -85,25 +84,21 @@ public class NoParseClausIE extends ClausIE {
 //                    }
 //                    dout.println();
 //                }
-                } catch (Exception e) {
-                    for (AgigaToken token : sent.getTokens()) {
-                        dout.print(token.getWord());
-                        dout.print(" ");
-                    }
-                    dout.println();
-                    e.printStackTrace();
-                }   catch (StackOverflowError e){
-                    for (AgigaToken token : sent.getTokens()) {
-                        dout.print(token.getWord());
-                        dout.print(" ");
-                    }
-                    dout.println();
-                    System.err.println("Giving up on StackoverFlow");
+                } catch (NullPointerException e) {
+                    eout.println("Giving up on Null Pointer");
+                    IOUtils.printSentence(sent, eout);
+                } catch (StackOverflowError e) {
+                    eout.println("Giving up on StackoverFlow");
+                    IOUtils.printSentence(sent, eout);
                 }
             }
+
+            System.out.print("\r"+reader.getNumDocs());
         }
 
         long totalTime = System.currentTimeMillis() - startTime;
-        System.out.println("Overall processing time takes " + totalTime / 6e4 + " minutes");
+        System.out.println("\nOverall processing time takes " + totalTime / 6e4 + " minutes");
     }
+
+
 }
