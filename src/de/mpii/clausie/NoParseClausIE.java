@@ -2,6 +2,7 @@ package de.mpii.clausie;
 
 import edu.cmu.cs.lti.gigascript.io.IOUtils;
 import edu.jhu.agiga.*;
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.pipeline.ParserAnnotatorUtils;
 import edu.stanford.nlp.trees.Tree;
 
@@ -24,6 +25,10 @@ public class NoParseClausIE extends ClausIE {
         this.depTree = depTree;
         this.semanticGraph = ParserAnnotatorUtils
                 .generateUncollapsedDependencies(depTree);
+
+        for (IndexedWord word : semanticGraph.vertexListSorted()) {
+            System.out.println(word);
+        }
     }
 
     public static void main(String[] argv) throws IOException {
@@ -44,36 +49,31 @@ public class NoParseClausIE extends ClausIE {
 
         long startTime = System.currentTimeMillis();
 
-
-//        System.out.println("Parsing XML");
-//        for (AgigaDocument doc : reader) {
-//
-//        }
-//        System.out.println("Number of docs: " + reader.getNumDocs());
-//        long readingTime = System.currentTimeMillis();
-//        System.out.println("Reading one gzip takes " + (readingTime - startTime) / 6e4 + " minutes");
-
-
         for (AgigaDocument doc : reader) {
             for (AgigaSentence sent : doc.getSents()) {
 
                 try {
                     npClauseIe.readParse(sent.getStanfordContituencyTree());
-//                dout.println(npClauseIe.getSemanticGraph().toFormattedString());
-//
-//                for (AgigaToken token : sent.getTokens()) {
-//                    dout.print(token.getWord());
-//                    dout.print(" ");
-//                }
-//                dout.println();
+                dout.println(npClauseIe.getSemanticGraph().toFormattedString());
+
+                for (AgigaToken token : sent.getTokens()) {
+                    dout.print(token.getWord());
+                    dout.print(" ");
+                }
+                dout.println();
 
 
                     npClauseIe.detectClauses();
-//                for (Clause clause : npClauseIe.getClauses()) {
-//                    dout.print("#   - ");
-//                    dout.print(clause.toString());
-//                    dout.println();
-//                }
+                for (Clause clause : npClauseIe.getClauses()) {
+                    for (int index = 0; index < clause.constituents.size(); index++) {
+                        Constituent constituent = clause.constituents.get(index);
+                        dout.println(constituent.getType()+"--"+constituent.rootString()+"--"+(constituent instanceof IndexedConstituent));
+                    }
+
+                    dout.print("#   - ");
+                    dout.print(clause.toString());
+                    dout.println();
+                }
 
                     npClauseIe.generatePropositions();
 //                for (Proposition p : npClauseIe.getPropositions()) {
@@ -93,7 +93,7 @@ public class NoParseClausIE extends ClausIE {
                 }
             }
 
-            System.out.print("\r"+reader.getNumDocs());
+            System.out.print("\r" + reader.getNumDocs());
         }
 
         long totalTime = System.currentTimeMillis() - startTime;
