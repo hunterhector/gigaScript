@@ -4,9 +4,9 @@ import edu.cmu.cs.lti.gigascript.io.IOUtils;
 import edu.jhu.agiga.*;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.pipeline.ParserAnnotatorUtils;
-import edu.stanford.nlp.trees.Tree;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,14 +20,22 @@ public class NoParseClausIE extends ClausIE {
         this.options = new Options();
     }
 
-    public void readParse(Tree depTree) {
+    public void readParse(AgigaSentence sent) {
         clear();
-        this.depTree = depTree;
+        this.depTree = sent.getStanfordContituencyTree();
+
         this.semanticGraph = ParserAnnotatorUtils
                 .generateUncollapsedDependencies(depTree);
 
-        for (IndexedWord word : semanticGraph.vertexListSorted()) {
-            System.out.println(word);
+
+        for (AgigaToken token : sent.getTokens()) {
+            token.getWord();
+        }
+
+        List<AgigaToken> tokens = sent.getTokens();
+
+        for (IndexedWord root : semanticGraph.getRoots()) {
+            root.setOriginalText(tokens.get(root.index() - 1).getWord());
         }
     }
 
@@ -53,37 +61,28 @@ public class NoParseClausIE extends ClausIE {
             for (AgigaSentence sent : doc.getSents()) {
 
                 try {
-                    npClauseIe.readParse(sent.getStanfordContituencyTree());
-                dout.println(npClauseIe.getSemanticGraph().toFormattedString());
+                    npClauseIe.readParse(sent);
+                    dout.println(npClauseIe.getSemanticGraph().toFormattedString());
 
-                for (AgigaToken token : sent.getTokens()) {
-                    dout.print(token.getWord());
-                    dout.print(" ");
-                }
-                dout.println();
-
+                    IOUtils.printSentence(sent,dout);
 
                     npClauseIe.detectClauses();
-                for (Clause clause : npClauseIe.getClauses()) {
-                    for (int index = 0; index < clause.constituents.size(); index++) {
-                        Constituent constituent = clause.constituents.get(index);
-                        dout.println(constituent.getType()+"--"+constituent.rootString()+"--"+(constituent instanceof IndexedConstituent));
+                    for (Clause clause : npClauseIe.getClauses()) {
+
+                        dout.print("#   - ");
+                        dout.print(clause.toString());
+                        dout.println();
                     }
 
-                    dout.print("#   - ");
-                    dout.print(clause.toString());
-                    dout.println();
-                }
-
                     npClauseIe.generatePropositions();
-//                for (Proposition p : npClauseIe.getPropositions()) {
-//                    for (String c : p.constituents) {
-//                        dout.print("\t\"");
-//                        dout.print(c);
-//                        dout.print("\"");
-//                    }
-//                    dout.println();
-//                }
+                    for (Proposition p : npClauseIe.getPropositions()) {
+                        for (String c : p.constituents) {
+                            dout.print("\t\"");
+                            dout.print(c);
+                            dout.print("\"");
+                        }
+                        dout.println();
+                    }
                 } catch (NullPointerException e) {
                     eout.println("Giving up on Null Pointer");
                     IOUtils.printSentence(sent, eout);
