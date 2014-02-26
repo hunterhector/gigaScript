@@ -1,6 +1,6 @@
 package de.mpii.clausie;
 
-import edu.cmu.cs.lti.gigascript.io.IOUtils;
+import edu.cmu.cs.lti.gigascript.util.IOUtils;
 import edu.jhu.agiga.*;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.pipeline.ParserAnnotatorUtils;
@@ -16,8 +16,9 @@ import java.util.List;
  */
 public class NoParseClausIE extends ClausIE {
 
-    public NoParseClausIE() {
+    public NoParseClausIE(OutputStream out) {
         this.options = new Options();
+        options.print(out);
     }
 
     public void readParse(AgigaSentence sent) {
@@ -45,15 +46,13 @@ public class NoParseClausIE extends ClausIE {
 
         OutputStream out = System.out;
 
-        FileOutputStream errorOutStream = new FileOutputStream(new File("error.txt"));
+        FileOutputStream errorOutStream = new FileOutputStream(new File("error.log"));
 
         PrintStream dout = new PrintStream(out);
 
         PrintStream eout = new PrintStream(errorOutStream);
 
-        NoParseClausIE npClauseIe = new NoParseClausIE();
-
-        npClauseIe.options.print(out);
+        NoParseClausIE npClauseIe = new NoParseClausIE(out);
 
         long startTime = System.currentTimeMillis();
 
@@ -68,7 +67,6 @@ public class NoParseClausIE extends ClausIE {
 
                     npClauseIe.detectClauses();
                     for (Clause clause : npClauseIe.getClauses()) {
-
                         dout.print("#   - ");
                         dout.print(clause.toString());
                         dout.println();

@@ -1,9 +1,7 @@
 package edu.cmu.cs.lti.gigascript.io;
 
-import edu.jhu.agiga.AgigaDocument;
-import edu.jhu.agiga.AgigaPrefs;
-import edu.jhu.agiga.AgigaSentence;
-import edu.jhu.agiga.StreamingDocumentReader;
+import edu.cmu.cs.lti.gigascript.util.IOUtils;
+import edu.jhu.agiga.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,7 +16,7 @@ import java.io.PrintStream;
  */
 public class AgigaReader {
     public static void main(String[] argv) throws FileNotFoundException {
-        String path = System.getProperty("user.home") + "/Downloads/nyt_eng_199407.xml.gz";
+        String path = System.getProperty("user.home") + "/Downloads/agiga_sample/nyt_eng_199407.xml.gz";
 
         long startTime = System.currentTimeMillis();
 
@@ -36,6 +34,10 @@ public class AgigaReader {
         for (AgigaDocument doc : reader) {
             for (AgigaSentence sent : doc.getSents()) {
                 IOUtils.printSentence(sent, out);
+                System.out.println(sent);
+                for (AgigaToken token : sent.getTokens()){
+                    System.out.println(token.getTokIdx());
+                }
             }
             System.out.print("\r" + reader.getNumDocs());
         }

@@ -38,7 +38,6 @@ public class ParseTreeReader {
     public static void main(String args[]) throws Exception {
 
 
-
         String parseStr = "( (S (PP (IN With) (NP (NP (NP (DT the) (NN nation) (POS 's)) (NN attention)) (VP (VBN riveted) (ADVP (RB again)) (PP (IN on) (NP (DT a) (NNP Los) (NNP Angeles) (NN courtroom)))))) (, ,) (NP (DT a) (NN knife) (NN dealer)) (VP (VBD testified) (SBAR (IN that) (S (NP (NNP O.J.) (NNP Simpson)) (VP (VBD bought) (NP (DT a) (JJ 15-inch) (NN knife)) (PP (NP (CD five) (NNS weeks)) (IN before) (NP (NP (NP (DT the) (VBG slashing) (NNS deaths)) (PP (IN of) (NP (PRP$ his) (NN ex-wife)))) (CC and) (NP (PRP$ her) (NN friend)))))))) (. .)))";
         SemanticGraph graph = readSemanticGraphFromParseString(parseStr);
 
