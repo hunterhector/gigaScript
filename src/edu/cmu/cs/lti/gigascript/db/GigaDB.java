@@ -101,7 +101,7 @@ public class GigaDB {
             e.printStackTrace();
             System.exit(0);
         }
-        logger.log(Level.INFO, "Tuple Table created successfully");
+        logger.log(Level.INFO, "AgigaArgument Table created successfully");
     }
 
     private void createBigramTable() {

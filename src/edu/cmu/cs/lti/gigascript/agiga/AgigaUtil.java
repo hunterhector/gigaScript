@@ -37,7 +37,7 @@ public class AgigaUtil {
 
         //assuming the head first format
         for (int i = 1; i< indices.size();i++){
-            AgigaToken token = tokens.get(i);
+            AgigaToken token = tokens.get(indices.get(i));
             builder.append(token.getLemma());
             builder.append(" ");
         }

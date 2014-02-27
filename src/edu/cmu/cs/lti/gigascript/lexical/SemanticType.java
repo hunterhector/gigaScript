@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.gigascript.edu.cmu.cs.lti.lexical;
+package edu.cmu.cs.lti.gigascript.lexical;
 
 /**
  * Created by zhengzhongliu on 2/26/14.

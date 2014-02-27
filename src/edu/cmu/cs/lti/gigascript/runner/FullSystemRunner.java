@@ -76,11 +76,12 @@ public class FullSystemRunner {
                 List<Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String>> allTuples = new ArrayList<Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String>>();
 
                 for (AgigaSentence sent : doc.getSents()) {
-//                    IOUtils.printSentence(sent,new PrintStream(System.out));
                     try {
                         npClauseIe.readParse(sent);
                         npClauseIe.detectClauses();
                         npClauseIe.generatePropositions();
+
+                        IOUtils.printSentence(sent,new PrintStream(System.out));
 
                         for (Proposition p : npClauseIe.getPropositions()) {
                             List<List<Integer>> constituentIndices = p.indices();
@@ -95,13 +96,16 @@ public class FullSystemRunner {
                             Pair<Pair<Integer, Integer>, List<String>> arg1s = populateArguments(p.argument(0), constituentIndices.get(2), wrapper, sent);
 
                             String relation = null;
+                            String relationPosition = "";
                             if (constituentIndices.get(1).get(0) == -1) {
                                 relation = p.relation();
                             } else {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
+                                relationPosition=""+constituentIndices.get(1).get(0);
                             }
 
                             System.out.println(p);
+                            System.out.println("Arg0s: "+arg0s+" Arg1s: "+arg1s+" Relation: "+" "+relationPosition+"@"+relation);
 
                             allTuples.add(Triple.of(arg0s, arg1s, relation));
                         }
@@ -124,9 +128,6 @@ public class FullSystemRunner {
                         Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> tuple1Keys = Pair.of(tuple1.getLeft().getKey(), tuple1.getMiddle().getKey());
                         Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> tuple2Keys = Pair.of(tuple2.getLeft().getKey(), tuple2.getMiddle().getKey());
 
-
-                        System.out.println(tuple1);
-                        System.out.println(tuple2);
                         if (!dbReferenceMapping.containsKey(tuple1Keys)) {
 //                            dbReferenceMapping.put(tuple1Keys, saveTuple(tuple1, gigaDB));
                             dbReferenceMapping.put(tuple1Keys, new ArrayList<Long>());
