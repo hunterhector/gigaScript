@@ -2,8 +2,9 @@ package edu.cmu.cs.lti.gigascript.runner;
 
 import de.mpii.clausie.NoParseClausIE;
 import de.mpii.clausie.Proposition;
+import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.agiga.AgigaDocumentWrapper;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaUtil;
-import edu.cmu.cs.lti.gigascript.agiga.AgigaWrapper;
 import edu.cmu.cs.lti.gigascript.db.GigaDB;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.cmu.cs.lti.gigascript.util.IOUtils;
@@ -14,6 +15,7 @@ import edu.jhu.agiga.StreamingDocumentReader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
+import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +33,9 @@ import java.util.logging.SimpleFormatter;
  * Created by zhengzhongliu on 2/25/14.
  */
 public class FullSystemRunner {
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, ConfigurationException {
+        //Config logger for errors
+        Logger logger = Logger.getLogger(FullSystemRunner.class.getName());
 
         String propPath = "settings.properties";
         if (args.length < 1) {
@@ -42,14 +46,12 @@ public class FullSystemRunner {
 
         Configuration config = new Configuration(new File(propPath));
 
-        //Config logger for errors
-        Logger logger = Logger.getLogger(FullSystemRunner.class.getName());
         FileHandler fh = new FileHandler(config.get("edu.cmu.cs.lti.gigaScript.clausie.errorOut"));
         logger.addHandler(fh);
         SimpleFormatter formatter = new SimpleFormatter();
         fh.setFormatter(formatter);
         //Remove console logging
-        logger.setUseParentHandlers(false);
+//        logger.setUseParentHandlers(false);
 
         //Prepare database
         GigaDB gigaDB = new GigaDB(config);
@@ -58,7 +60,14 @@ public class FullSystemRunner {
         //Prepare data source
         String corpusPath = config.get("edu.cmu.cs.lti.gigaScript.agiga.dir");
 
+        logger.log(Level.INFO,"Reading corpus form directory : "+corpusPath);
+
         File folder = new File(corpusPath);
+
+        if (!folder.exists()){
+             logger.log(Level.SEVERE,"Input directory not found");
+             throw new ConfigurationException();
+        }
 
         File[] listOfFiles = folder.listFiles();
 
@@ -71,9 +80,9 @@ public class FullSystemRunner {
             long startTime = System.currentTimeMillis();
 
             for (AgigaDocument doc : reader) {
-                AgigaWrapper wrapper = new AgigaWrapper(doc);
+                AgigaDocumentWrapper wrapper = new AgigaDocumentWrapper(doc);
 
-                List<Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String>> allTuples = new ArrayList<Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String>>();
+                List<Triple<AgigaArgument,AgigaArgument, String>> allTuples = new ArrayList<Triple<AgigaArgument,AgigaArgument, String>>();
 
                 for (AgigaSentence sent : doc.getSents()) {
                     try {
@@ -86,26 +95,34 @@ public class FullSystemRunner {
                         for (Proposition p : npClauseIe.getPropositions()) {
                             List<List<Integer>> constituentIndices = p.indices();
 
+                            //temporary solution, make the indices zero based
+                            for (int u = 0; u< constituentIndices.size();u++){
+                                for (int v = 0; v< constituentIndices.get(u).size(); v++){
+                                    if (constituentIndices.get(u).get(v) > 0)
+                                     constituentIndices.get(u).set(v,constituentIndices.get(u).get(v)-1);
+                                }
+                            }
+
                             //ignore non-triples
                             if (constituentIndices.size() <= 2){
                                 continue;
                             }
 
                             //assume in triple mode
-                            Pair<Pair<Integer, Integer>, List<String>> arg0s = populateArguments(p.subject(), constituentIndices.get(0), wrapper, sent);
-                            Pair<Pair<Integer, Integer>, List<String>> arg1s = populateArguments(p.argument(0), constituentIndices.get(2), wrapper, sent);
+                            AgigaArgument arg0s = populateArguments(constituentIndices.get(0), wrapper, sent);
+                            AgigaArgument arg1s = populateArguments(constituentIndices.get(2), wrapper, sent);
 
                             String relation = null;
                             String relationPosition = "";
-                            if (constituentIndices.get(1).get(0) == -1) {
+                            if (constituentIndices.get(1).get(0) < 0) {
                                 relation = p.relation();
                             } else {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
-                                relationPosition=""+constituentIndices.get(1).get(0);
                             }
+                            relationPosition=""+constituentIndices.get(1).get(0);
 
                             System.out.println(p);
-                            System.out.println("Arg0s: "+arg0s+" Arg1s: "+arg1s+" Relation: "+" "+relationPosition+"@"+relation);
+                            System.out.println("Arg0s: "+arg0s+", Arg1s: "+arg1s+", Relation: "+" "+relationPosition+"@"+relation);
 
                             allTuples.add(Triple.of(arg0s, arg1s, relation));
                         }
@@ -117,28 +134,29 @@ public class FullSystemRunner {
                     }
                 }
 
-                //store tuples for this document
-                Map<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, List<Long>> dbReferenceMapping = new HashMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, List<Long>>();
+                //store the referencing ids that this argument holds in the database, it could be a list of id because each alternative form will take up one
+                Map<Pair<AgigaArgument, AgigaArgument>, List<Long>> dbTuple2Mapping = new HashMap<Pair<AgigaArgument, AgigaArgument>, List<Long>>();
 
                 for (int t1 = 0; t1 < allTuples.size() - 1; t1++) {
                     for (int t2 = t1 + 1; t2 < allTuples.size(); t2++) {
-                        Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String> tuple1 = allTuples.get(t1);
-                        Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String> tuple2 = allTuples.get(t2);
+                        Triple<AgigaArgument,AgigaArgument, String> tuple1 = allTuples.get(t1);
+                        Triple<AgigaArgument,AgigaArgument, String> tuple2 = allTuples.get(t2);
 
-                        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> tuple1Keys = Pair.of(tuple1.getLeft().getKey(), tuple1.getMiddle().getKey());
-                        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> tuple2Keys = Pair.of(tuple2.getLeft().getKey(), tuple2.getMiddle().getKey());
+                        Pair<AgigaArgument, AgigaArgument> tuple1Keys = Pair.of(tuple1.getLeft(), tuple1.getMiddle());
+                        Pair<AgigaArgument, AgigaArgument> tuple2Keys = Pair.of(tuple2.getLeft(), tuple2.getMiddle());
 
-                        if (!dbReferenceMapping.containsKey(tuple1Keys)) {
-//                            dbReferenceMapping.put(tuple1Keys, saveTuple(tuple1, gigaDB));
-                            dbReferenceMapping.put(tuple1Keys, new ArrayList<Long>());
+                        if (!dbTuple2Mapping.containsKey(tuple1Keys)) {
+                            dbTuple2Mapping.put(tuple1Keys, saveTuple(tuple1, gigaDB));
+//                            dbTuple2Mapping.put(tuple1Keys, new ArrayList<Long>());
                         }
 
-                        if (!dbReferenceMapping.containsKey(tuple2Keys)) {
-//                            dbReferenceMapping.put(tuple2Keys, saveTuple(tuple2, gigaDB));
-                            dbReferenceMapping.put(tuple2Keys,new ArrayList<Long>());
+                        if (!dbTuple2Mapping.containsKey(tuple2Keys)) {
+                            dbTuple2Mapping.put(tuple2Keys, saveTuple(tuple2, gigaDB));
+//                            dbTuple2Mapping.put(tuple2Keys,new ArrayList<Long>());
                         }
 
-                        int dist = t2 - t1;
+                        int tupleDist = t2 - t1;
+                        int sentDist = tuple2.getLeft().getSentenceIndex() - tuple1.getLeft().getSentenceIndex();
                         boolean[][] equalities = new boolean[2][2];
 
                         equalities[0][0] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getLeft());
@@ -146,14 +164,14 @@ public class FullSystemRunner {
                         equalities[1][0] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft());
                         equalities[1][1] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight());
 
-                        for (long t1Id : dbReferenceMapping.get(tuple1Keys)) {
-                            if (t1Id == -1)
+                        for (long t1Id : dbTuple2Mapping.get(tuple1Keys)) {
+                            if (t1Id < 0)
                                 continue;
-                            for (long t2Id : dbReferenceMapping.get(tuple2Keys)) {
-                                if (t2Id == -1){
+                            for (long t2Id : dbTuple2Mapping.get(tuple2Keys)) {
+                                if (t2Id < 0){
                                     continue;
                                 }
-                                gigaDB.addGigaBigram(t1Id, t2Id, dist, equalities);
+                                gigaDB.addGigaBigram(t1Id, t2Id, tupleDist, equalities);
                             }
                         }
                     }
@@ -167,10 +185,10 @@ public class FullSystemRunner {
     }
 
 
-    private static List<Long> saveTuple(Triple<Pair<Pair<Integer, Integer>, List<String>>, Pair<Pair<Integer, Integer>, List<String>>, String> tuple, GigaDB db) {
+    private static List<Long> saveTuple(Triple<AgigaArgument, AgigaArgument, String> tuple, GigaDB db) {
         List<Long> tupleIds = new ArrayList<Long>();
-        for (String arg0 : tuple.getLeft().getValue()) {
-            for (String arg1 : tuple.getMiddle().getValue()) {
+        for (String arg0 : tuple.getLeft().getAlternativeForms()) {
+            for (String arg1 : tuple.getMiddle().getAlternativeForms()) {
                 long tupleId = db.addGigaTuple(arg0, arg1, tuple.getRight());
                 tupleIds.add(tupleId);
             }
@@ -178,13 +196,13 @@ public class FullSystemRunner {
         return tupleIds;
     }
 
-    private static Pair<Pair<Integer, Integer>, List<String>> populateArguments(String constituent, List<Integer> indices, AgigaWrapper wrapper, AgigaSentence sent) {
+    private static AgigaArgument populateArguments( List<Integer> indices, AgigaDocumentWrapper wrapper, AgigaSentence sent) {
         Pair<String, Integer> semanticTypeWithIndex = wrapper.getArgumentSemanticType(sent, indices);
 
-        List<String> arguments = new ArrayList<String>();
-
         String type = semanticTypeWithIndex.getLeft();
-        int keywordIndex = semanticTypeWithIndex.getRight();
+        int keywordIndex = semanticTypeWithIndex.getRight() > 0? semanticTypeWithIndex.getRight() : indices.get(0);
+
+        AgigaArgument argument = new AgigaArgument(sent.getSentIdx(),keywordIndex);
 
         String lemma;
         if (keywordIndex > 0) {
@@ -192,10 +210,13 @@ public class FullSystemRunner {
         } else {
             lemma = AgigaUtil.getLemma(sent, indices.get(0));
         }
-        arguments.add(lemma);
-        if (type != null)
-            arguments.add(type);
 
-        return Pair.of(Pair.of(sent.getSentIdx(), keywordIndex), arguments);
+        argument.addAlternativeForms(lemma);
+
+        //when there is a nontrivial type
+        if (type != null && !type.equals("O"))
+            argument.addAlternativeForms(type);
+
+        return argument;
     }
 }

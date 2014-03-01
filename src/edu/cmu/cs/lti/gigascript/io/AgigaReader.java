@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.gigascript.io;
 
+import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
 import edu.cmu.cs.lti.gigascript.util.IOUtils;
 import edu.jhu.agiga.*;
 
@@ -35,8 +36,11 @@ public class AgigaReader {
             for (AgigaSentence sent : doc.getSents()) {
                 IOUtils.printSentence(sent, out);
                 System.out.println(sent);
+
+                AgigaSentenceWrapper wrapper = new AgigaSentenceWrapper(sent);
+
                 for (AgigaToken token : sent.getTokens()){
-                    System.out.println(token.getTokIdx());
+                    System.out.println(token.getTokIdx()+" "+token.getWord()+ " " +token.getNerTag());
                 }
             }
             System.out.print("\r" + reader.getNumDocs());

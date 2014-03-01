@@ -1,8 +1,11 @@
 package edu.cmu.cs.lti.gigascript.agiga;
 
+import edu.cmu.cs.lti.gigascript.util.Joiners;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,7 +14,6 @@ import java.util.List;
 public class AgigaArgument {
     private int keywordTokenIndex;
     private int sentenceIndex;
-    private int documentIndex;
 
     // store alternative forms of the argument in order to make generization possible
     // for example, we could save the entity type of the argument here
@@ -21,10 +23,10 @@ public class AgigaArgument {
 
     }
 
-    public AgigaArgument(int documentIndex, int sentenceIndex, int keywordTokenIndex) {
+    public AgigaArgument(int sentenceIndex, int keywordTokenIndex) {
         this.keywordTokenIndex = keywordTokenIndex;
         this.sentenceIndex = sentenceIndex;
-        this.documentIndex = documentIndex;
+        this.alternativeForms = new ArrayList<String>();
     }
 
 
@@ -48,16 +50,17 @@ public class AgigaArgument {
         return alternativeForms;
     }
 
+    //caution, not deep copy here.
     public void setAlternativeForms(List<String> alternativeForms) {
         this.alternativeForms = alternativeForms;
     }
 
-    public int getDocumentIndex() {
-        return documentIndex;
+    public void addAlternativeForms(String alternativeForm){
+        alternativeForms.add(alternativeForm);
     }
 
-    public void setDocumentIndex(int documentIndex) {
-        this.documentIndex = documentIndex;
+    public Pair<Integer, Integer> getIndexingPair(){
+       return Pair.of(keywordTokenIndex,sentenceIndex);
     }
 
     public boolean equals(Object obj) {
@@ -69,12 +72,16 @@ public class AgigaArgument {
             return false;
 
         AgigaArgument rhs = (AgigaArgument) obj;
-        return new EqualsBuilder().append(keywordTokenIndex, rhs.keywordTokenIndex).append(sentenceIndex, rhs.sentenceIndex).append(documentIndex,rhs.documentIndex).isEquals();
+        return new EqualsBuilder().append(keywordTokenIndex, rhs.keywordTokenIndex).append(sentenceIndex, rhs.sentenceIndex).isEquals();
     }
 
     public int hashCode(){
-        return new HashCodeBuilder(17,31).append(keywordTokenIndex).append(sentenceIndex).append(documentIndex).toHashCode();
+        return new HashCodeBuilder(17,31).append(keywordTokenIndex).append(sentenceIndex).toHashCode();
     }
 
+
+    public String toString(){
+        return String.format("[%s]@(%d,%d)",Joiners.commaJoin(alternativeForms),sentenceIndex,keywordTokenIndex);
+    }
 
 }

@@ -14,11 +14,12 @@ import java.util.Set;
 /**
  * Created by zhengzhongliu on 2/26/14.
  */
-public class AgigaWrapper {
+public class AgigaDocumentWrapper {
     Table<Integer, Integer, SemanticType> typeMapping;
     List<Set<Pair<Integer, Integer>>> corefChains;
 
-    public AgigaWrapper(AgigaDocument document) {
+
+    public AgigaDocumentWrapper(AgigaDocument document) {
         typeMapping = HashBasedTable.create();
         corefChains = new ArrayList<Set<Pair<Integer, Integer>>>();
 
@@ -31,7 +32,7 @@ public class AgigaWrapper {
                 for (int i = mention.getStartTokenIdx(); i < mention.getEndTokenIdx(); i++) {
                     typeMapping.put(sentIndex, i, type);
                     AgigaToken token = document.getSents().get(sentIndex).getTokens().get(i);
-                    if (token.getNerTag() != null && !token.getNerTag().equals("")) {
+                    if (token.getNerTag() != null && !token.getNerTag().equals("O")) {
                         type.setType(token.getNerTag());
                     }
                     corefChain.add(Pair.of(sentIndex,i));
@@ -41,29 +42,45 @@ public class AgigaWrapper {
         }
     }
 
-    public boolean sameArgument(Pair<Integer, Integer> sentTokenIndex1, Pair<Integer, Integer> sentTokenIndex2){
-        if (sentTokenIndex1.equals(sentTokenIndex2)) return true;
+    public boolean sameArgument(AgigaArgument argument1, AgigaArgument argument2){
+        if (argument1.equals(argument2)) return true;
         else{
             for (Set<Pair<Integer, Integer>> corefChain : corefChains){
-               if (corefChain.contains(sentTokenIndex1) && corefChain.contains(sentTokenIndex2))
+               if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair()))
                    return true;
             }
         }
         return false;
     }
 
-    public String getSemanticType(AgigaSentence sentence, int index) {
+    public String getSemanticType(AgigaSentence sentence, AgigaToken token) {
+        int index = token.getTokIdx();
+
+        // trust the token's own Named Entity Tag
+        if (!token.getNerTag().equals("O") && !token.getNerTag().equals("")){
+            return token.getNerTag();
+        }
+
+
+        // if the previous one didn't give anything, use the coreferenced type
         SemanticType type = typeMapping.get(sentence.getSentIdx(), index);
         return type == null ? null : type.getType();
     }
 
+    /**
+     * Return the semantic type and the index of the word that is used to get this type
+     * @param sentence
+     * @param indices
+     * @return
+     */
     public Pair<String, Integer> getArgumentSemanticType(AgigaSentence sentence, List<Integer> indices) {
         if (indices.isEmpty()) {
             return null;
-        } else if (indices.get(0) == -1) {
+        } else if (indices.get(0) < 0) {
             return null;
         } else {
-            String headWordType = getSemanticType(sentence, indices.get(0));
+            AgigaToken token = sentence.getTokens().get(indices.get(0));
+            String headWordType = getSemanticType(sentence, token);
 
             if (headWordType != null) {
                 return Pair.of(headWordType, indices.get(0));
@@ -72,13 +89,12 @@ public class AgigaWrapper {
                 int semanticWordIndex = -1;
 
                 for (Integer i : indices) {
-                    String newType = getSemanticType(sentence, i);
+                    String newType = getSemanticType(sentence, token);
                     if (newType != null) {
                         phraseSemanticType = newType;
                         semanticWordIndex = i;
                     }
                 }
-
                 return Pair.of(phraseSemanticType, semanticWordIndex);
             }
         }

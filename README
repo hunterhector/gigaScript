@@ -5,6 +5,7 @@ CONTENTS (VERSION 0.0.1)
 -data/ : A set of test sentences
 -lib/: The full library used
 -src/: Clausie source code
+-README: This file
 
 LICENSE
 
