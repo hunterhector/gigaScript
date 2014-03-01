@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.gigascript.db;
+package edu.cmu.cs.lti.gigascript.io;
 
 
 import edu.cmu.cs.lti.gigascript.util.Configuration;
@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 /**
  * Created by zhengzhongliu on 2/25/14.
  */
-public class GigaDB {
+public class GigaDB extends GigaStorage{
     public static Logger logger = Logger.getLogger(GigaDB.class.getName());
 
     private Connection conn = null;
@@ -32,9 +32,10 @@ public class GigaDB {
         dbPath = config.get("edu.cmu.cs.lti.gigaScript.db.path");
         tupleTableName = config.get("edu.cmu.cs.lti.gigaScript.tupleTableName");
         bigramTableName = config.get("edu.cmu.cs.lti.gigaScript.bigramTableName");
+        connectOrCreate();
     }
 
-    public void connectOrCreate() {
+    private void connectOrCreate() {
         try {
             final File f = new File(dbPath);
             boolean exists = true;
@@ -157,35 +158,51 @@ public class GigaDB {
     }
 
     public long addGigaTuple(String arg0, String arg1, String relation) {
-        arg0 = arg0.replace("'","''");
-        arg1 = arg1.replace("'","''");
+        arg0 = arg0.replace("'", "''");
+        arg1 = arg1.replace("'", "''");
 
-        String insertSql = String.format("INSERT OR REPLACE INTO %s (Arg0,Arg1,Rel,Count) \n" +
-                "  VALUES (  '%s', '%s' , '%s'\n" +
-                "  COALESCE((SELECT Count + 1 FROM %s WHERE Arg0 = %s AND Arg1 = %s), 1)\n" +
-                "  );", tupleTableName, arg0, arg1, relation, tupleTableName, arg0, arg1);
+        String insertSql = String.format("INSERT OR IGNORE INTO %s (Arg0,Arg1,Rel,Count) " +
+                "  VALUES (  '%s', '%s' , '%s', 1 );",
+                tupleTableName, arg0, arg1, relation);
 
-        System.out.println(insertSql);
+        String updateSql = String.format("UPDATE %s SET Count = Count + 1 WHERE " +
+                "Arg0 = '%s' AND Arg1 = '%s' AND Rel = '%s';",tupleTableName,arg0,arg1,relation);
+
+        logger.log(Level.INFO, insertSql);
+
+        logger.log(Level.INFO, updateSql);
+
 
         try {
-            PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
-            try {
-                ps.executeUpdate();
-                ResultSet rs = ps.getGeneratedKeys();
-                rs.next();
-                return rs.getLong(1);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                ps.close();
-            }
+            long insertReply = executeSqlUpdate(insertSql);
+            long updateReply = executeSqlUpdate(updateSql);
+
+            logger.log(Level.INFO, "Insert and update " + insertReply + " " + updateReply);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage(), e);
         }
+
+
         return -1; //indicate failure
     }
 
-    public void addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
+    private long executeSqlUpdate(String sql) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        try {
+            int rChanged = ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            rs.next();
+            logger.log(Level.INFO, "Update by the sql " + rChanged);
+            return rs.getLong(1);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE,e.getMessage(),e);
+        } finally {
+            ps.close();
+        }
+        return -1;
+    }
+
+    public long addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
         //1. search for the record
         try {
             Statement stmt = conn.createStatement();
@@ -198,6 +215,10 @@ public class GigaDB {
                     directionalCounts.put(countName, directonalRs.getInt(countName));
                 }
             }
+
+            directonalRs.close();
+            stmt.close();
+
             if (!directionalCounts.isEmpty()) {
                 StringBuffer sqlBuffer = new StringBuffer();
 
@@ -225,9 +246,8 @@ public class GigaDB {
                     }
                 }
 
-                String sqlIncrement = String.format("UPDATE %s SET %s WHERE Tuple1=%s AND Tuple1=%s;", bigramTableName, sqlBuffer.toString(),t1, t2);
-                System.out.println(sqlIncrement);
-                stmt.executeUpdate(sqlIncrement);
+                String sqlIncrement = String.format("UPDATE %s SET %s WHERE Tuple1=%s AND Tuple1=%s;", bigramTableName, sqlBuffer.toString(), t1, t2);
+                return executeSqlUpdate(sqlIncrement);
             } else {
                 String columnNames = "";
                 String values = "";
@@ -240,19 +260,17 @@ public class GigaDB {
                     values += "1";
                     if (counter < directionalCounts.size()) {
                         columnNames += ", ";
-                        values+=", ";
+                        values += ", ";
                     }
                 }
                 String sqlNewEntry = String.format("INSERT INTO %s (%s) VALUES (%s);", bigramTableName, columnNames, values);
-                stmt.executeUpdate(sqlNewEntry);
+                return executeSqlUpdate(sqlNewEntry);
             }
-
-            directonalRs.close();
-            stmt.close();
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage(), e);
         }
+
+        return -1;
     }
 
     private Map<String, Integer> getBigramCountsToIncrement(int distance, boolean reverse) {
@@ -285,7 +303,7 @@ public class GigaDB {
         try {
             conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage(), e);
         }
     }
 

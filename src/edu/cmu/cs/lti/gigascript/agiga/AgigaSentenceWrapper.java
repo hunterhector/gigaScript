@@ -33,27 +33,25 @@ public class AgigaSentenceWrapper {
         return govIdx == -1 ? null : tokens.get(govIdx);
     }
 
-    public AgigaToken getHeadWordFromPhrase(List<Integer> indices) {
-        if (indices.size() == 1) {
-            return tokens.get(indices.get(0));
-        } else {
-            int headIndexPosition = 0;
-            AgigaToken tempHeadNode = tokens.get(headIndexPosition);
-            for (int i = 0; i < indices.size(); i++) {
-                AgigaToken token = tokens.get(i);
-                AgigaToken gov = toGov(token);
-
-                if (gov == null){
-                   return token;
-                }else if (gov.equals(token)){
-                    return;
-                }
-
-            }
-
-            return tokens.get(indices.get(headIndexPosition));
-        }
-    }
-
-
+//    public AgigaToken getHeadWordFromPhrase(List<Integer> indices) {
+//        if (indices.size() == 1) {
+//            return tokens.get(indices.get(0));
+//        } else {
+//            int headIndexPosition = 0;
+//            AgigaToken tempHeadNode = tokens.get(headIndexPosition);
+//            for (int i = 0; i < indices.size(); i++) {
+//                AgigaToken token = tokens.get(i);
+//                AgigaToken gov = toGov(token);
+//
+//                if (gov == null){
+//                   return token;
+//                }else if (gov.equals(token)){
+//                    return;
+//                }
+//
+//            }
+//
+//            return tokens.get(indices.get(headIndexPosition));
+//        }
+//    }
 }

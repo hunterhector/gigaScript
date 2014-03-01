@@ -18,7 +18,6 @@ public class AgigaDocumentWrapper {
     Table<Integer, Integer, SemanticType> typeMapping;
     List<Set<Pair<Integer, Integer>>> corefChains;
 
-
     public AgigaDocumentWrapper(AgigaDocument document) {
         typeMapping = HashBasedTable.create();
         corefChains = new ArrayList<Set<Pair<Integer, Integer>>>();
@@ -29,12 +28,15 @@ public class AgigaDocumentWrapper {
             Set<Pair<Integer,Integer>> corefChain = new HashSet<Pair<Integer, Integer>>();
             for (AgigaMention mention : coref.getMentions()) {
                 int sentIndex = mention.getSentenceIdx();
+
                 for (int i = mention.getStartTokenIdx(); i < mention.getEndTokenIdx(); i++) {
-                    typeMapping.put(sentIndex, i, type);
-                    AgigaToken token = document.getSents().get(sentIndex).getTokens().get(i);
-                    if (token.getNerTag() != null && !token.getNerTag().equals("O")) {
-                        type.setType(token.getNerTag());
-                    }
+                    //This procedure populate the entity type among coreference mentions, which might hurt the performance sometime
+                    //currently disabled
+//                    typeMapping.put(sentIndex, i, type);
+//                    AgigaToken token = document.getSents().get(sentIndex).getTokens().get(i);
+//                    if (token.getNerTag() != null && !token.getNerTag().equals("O")) {
+//                        type.setType(token.getNerTag());
+//                    }
                     corefChain.add(Pair.of(sentIndex,i));
                 }
             }

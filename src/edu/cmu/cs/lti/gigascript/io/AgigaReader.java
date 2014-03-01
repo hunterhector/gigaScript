@@ -35,12 +35,12 @@ public class AgigaReader {
         for (AgigaDocument doc : reader) {
             for (AgigaSentence sent : doc.getSents()) {
                 IOUtils.printSentence(sent, out);
-                System.out.println(sent);
+//                System.out.println(sent);
 
                 AgigaSentenceWrapper wrapper = new AgigaSentenceWrapper(sent);
 
                 for (AgigaToken token : sent.getTokens()){
-                    System.out.println(token.getTokIdx()+" "+token.getWord()+ " " +token.getNerTag());
+//                    System.out.println(token.getTokIdx()+" "+token.getWord()+ " " +token.getNerTag());
                 }
             }
             System.out.print("\r" + reader.getNumDocs());

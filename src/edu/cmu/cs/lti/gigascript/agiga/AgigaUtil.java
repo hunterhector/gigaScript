@@ -43,8 +43,4 @@ public class AgigaUtil {
         }
         return builder.toString().trim();
     }
-
-
-
-
 }
