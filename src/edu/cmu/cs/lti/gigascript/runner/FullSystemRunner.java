@@ -5,6 +5,8 @@ import de.mpii.clausie.Proposition;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaDocumentWrapper;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaUtil;
+import edu.cmu.cs.lti.gigascript.io.CacheBasedStorage;
+import edu.cmu.cs.lti.gigascript.io.CachedFileStorage;
 import edu.cmu.cs.lti.gigascript.io.GigaDB;
 import edu.cmu.cs.lti.gigascript.io.GigaStorage;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
@@ -55,9 +57,11 @@ public class FullSystemRunner {
 
         //Prepare storage
         String storageMethod = config.get("edu.cmu.cs.lti.gigaScript.tupleStorage");
-        GigaStorage gigaStorage = new GigaDB(config);
+        CacheBasedStorage gigaStorage;
         if (storageMethod.equals("db")){
             gigaStorage = new GigaDB(config);
+        }else{
+            gigaStorage = new CachedFileStorage(config);
         }
 
         //Prepare data source
@@ -68,19 +72,28 @@ public class FullSystemRunner {
         File folder = new File(corpusPath);
 
         if (!folder.exists()){
-             logger.log(Level.SEVERE,"Input directory not found");
+             logger.log(Level.SEVERE,"Input directory not found: "+corpusPath);
              throw new ConfigurationException();
         }
 
         File[] listOfFiles = folder.listFiles();
 
+        if (listOfFiles == null){
+            logger.log(Level.SEVERE,"Cannot list the give directory: "+folder.getCanonicalPath());
+            System.exit(1);
+        }
+
+        long startTime = System.currentTimeMillis();
+
         for (int i = 0; i < listOfFiles.length; i++) {
-            StreamingDocumentReader reader = new StreamingDocumentReader(listOfFiles[i].getAbsolutePath(), new AgigaPrefs());
+            File currentFile = listOfFiles[i];
+
+            StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
             //Prepare IO
             OutputStream out = System.out;
             NoParseClausIE npClauseIe = new NoParseClausIE(out);
 
-            long startTime = System.currentTimeMillis();
+            System.out.println("Processing achrive: "+ currentFile.getName());
 
             for (AgigaDocument doc : reader) {
                 AgigaDocumentWrapper wrapper = new AgigaDocumentWrapper(doc);
@@ -131,7 +144,7 @@ public class FullSystemRunner {
                 }
 
                 //store the referencing ids that this argument holds in the database, it could be a list of id because each alternative form will take up one
-                Map<Pair<AgigaArgument, AgigaArgument>, List<Long>> dbTuple2Mapping = new HashMap<Pair<AgigaArgument, AgigaArgument>, List<Long>>();
+                Map<Pair<AgigaArgument, AgigaArgument>, List<Long>> tuple2StorageIdMapping = new HashMap<Pair<AgigaArgument, AgigaArgument>, List<Long>>();
 
 
                 ArrayList<Triple<AgigaArgument,AgigaArgument,String>> allTupleList = new ArrayList<Triple<AgigaArgument, AgigaArgument, String>>(allTuples);
@@ -144,14 +157,12 @@ public class FullSystemRunner {
                         Pair<AgigaArgument, AgigaArgument> tuple1Keys = Pair.of(tuple1.getLeft(), tuple1.getMiddle());
                         Pair<AgigaArgument, AgigaArgument> tuple2Keys = Pair.of(tuple2.getLeft(), tuple2.getMiddle());
 
-                        if (!dbTuple2Mapping.containsKey(tuple1Keys)) {
-                            dbTuple2Mapping.put(tuple1Keys, saveTuple(tuple1, gigaStorage));
-//                            dbTuple2Mapping.put(tuple1Keys, new ArrayList<Long>());
+                        if (!tuple2StorageIdMapping.containsKey(tuple1Keys)) {
+                            tuple2StorageIdMapping.put(tuple1Keys, saveTuple(tuple1, gigaStorage));
                         }
 
-                        if (!dbTuple2Mapping.containsKey(tuple2Keys)) {
-                            dbTuple2Mapping.put(tuple2Keys, saveTuple(tuple2, gigaStorage));
-//                            dbTuple2Mapping.put(tuple2Keys,new ArrayList<Long>());
+                        if (!tuple2StorageIdMapping.containsKey(tuple2Keys)) {
+                            tuple2StorageIdMapping.put(tuple2Keys, saveTuple(tuple2, gigaStorage));
                         }
 
                         int tupleDist = t2 - t1;
@@ -163,14 +174,14 @@ public class FullSystemRunner {
                         equalities[1][0] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft());
                         equalities[1][1] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight());
 
-//                        for (long t1Id : dbTuple2Mapping.get(tuple1Keys)) {
+//                        for (long t1Id : tuple2StorageIdMapping.get(tuple1Keys)) {
 //                            if (t1Id < 0)
 //                                continue;
-//                            for (long t2Id : dbTuple2Mapping.get(tuple2Keys)) {
+//                            for (long t2Id : tuple2StorageIdMapping.get(tuple2Keys)) {
 //                                if (t2Id < 0){
 //                                    continue;
 //                                }
-//                                gigaDB.addGigaBigram(t1Id, t2Id, tupleDist, equalities);
+//                                gigaStorage.addGigaBigram(t1Id, t2Id, tupleDist, equalities);
 //                            }
 //                        }
                     }
@@ -178,9 +189,12 @@ public class FullSystemRunner {
                 System.out.print("\r" + reader.getNumDocs());
             }
 
-            long totalTime = System.currentTimeMillis() - startTime;
-            System.out.println("\nOverall processing time takes " + totalTime / 6e4 + " minutes");
+            //flush release memory
+            gigaStorage.flush();
         }
+
+        long totalTime = System.currentTimeMillis() - startTime;
+        System.out.println("\nOverall processing time takes " + totalTime / 6e4 + " minutes");
     }
 
 

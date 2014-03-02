@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.gigascript.io;
 
 
 import edu.cmu.cs.lti.gigascript.util.Configuration;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.sql.*;
@@ -14,7 +15,7 @@ import java.util.logging.Logger;
 /**
  * Created by zhengzhongliu on 2/25/14.
  */
-public class GigaDB extends GigaStorage{
+public class GigaDB extends CacheBasedStorage{
     public static Logger logger = Logger.getLogger(GigaDB.class.getName());
 
     private Connection conn = null;
@@ -202,7 +203,7 @@ public class GigaDB extends GigaStorage{
         return -1;
     }
 
-    public long addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
+    public void addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
         //1. search for the record
         try {
             Statement stmt = conn.createStatement();
@@ -247,7 +248,6 @@ public class GigaDB extends GigaStorage{
                 }
 
                 String sqlIncrement = String.format("UPDATE %s SET %s WHERE Tuple1=%s AND Tuple1=%s;", bigramTableName, sqlBuffer.toString(), t1, t2);
-                return executeSqlUpdate(sqlIncrement);
             } else {
                 String columnNames = "";
                 String values = "";
@@ -264,13 +264,10 @@ public class GigaDB extends GigaStorage{
                     }
                 }
                 String sqlNewEntry = String.format("INSERT INTO %s (%s) VALUES (%s);", bigramTableName, columnNames, values);
-                return executeSqlUpdate(sqlNewEntry);
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
         }
-
-        return -1;
     }
 
     private Map<String, Integer> getBigramCountsToIncrement(int distance, boolean reverse) {
@@ -315,4 +312,8 @@ public class GigaDB extends GigaStorage{
     }
 
 
+    @Override
+    public void flush() {
+
+    }
 }

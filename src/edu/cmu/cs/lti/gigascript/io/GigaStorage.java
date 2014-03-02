@@ -1,5 +1,7 @@
 package edu.cmu.cs.lti.gigascript.io;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Hector, Zhengzhong Liu
@@ -11,6 +13,6 @@ public abstract class GigaStorage {
     public abstract long addGigaTuple(String arg0, String arg1, String relation);
 
 
-    public abstract long addGigaBigram(long t1, long t2, int distance, boolean[][] equality);
+    public abstract void addGigaBigram(long t1, long t2, int distance, boolean[][] equality);
 
 }
