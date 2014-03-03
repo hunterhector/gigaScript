@@ -16,7 +16,12 @@ import java.util.List;
  */
 public class NoParseClausIE extends ClausIE {
 
-    public NoParseClausIE(OutputStream out) {
+    public NoParseClausIE(OutputStream out, String configFile) throws IOException {
+        this.options = new Options(configFile);
+        options.print(out);
+    }
+
+    public NoParseClausIE(OutputStream out){
         this.options = new Options();
         options.print(out);
     }

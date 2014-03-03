@@ -9,11 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by zhengzhongliu on 2/26/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/26/14
+ * Time: 1:16 AM
  */
 public class AgigaArgument {
     private int keywordTokenIndex;
     private int sentenceIndex;
+
+    private String headWordLemma;
+    private String entityType;
 
     // store alternative forms of the argument in order to make generization possible
     // for example, we could save the entity type of the argument here
@@ -50,12 +56,7 @@ public class AgigaArgument {
         return alternativeForms;
     }
 
-    //caution, not deep copy here.
-    public void setAlternativeForms(List<String> alternativeForms) {
-        this.alternativeForms = alternativeForms;
-    }
-
-    public void addAlternativeForms(String alternativeForm){
+    private void addAlternativeForms(String alternativeForm){
         alternativeForms.add(alternativeForm);
     }
 
@@ -84,4 +85,21 @@ public class AgigaArgument {
         return String.format("[%s]@(%d,%d)",Joiners.commaJoin(alternativeForms),sentenceIndex,keywordTokenIndex);
     }
 
+    public String getEntityType() {
+        return entityType;
+    }
+
+    public void setEntityType(String entityType) {
+        addAlternativeForms(entityType);
+        this.entityType = entityType;
+    }
+
+    public String getHeadWordLemma() {
+        return headWordLemma;
+    }
+
+    public void setHeadWordLemma(String headWordLemma) {
+        addAlternativeForms(headWordLemma);
+        this.headWordLemma = headWordLemma;
+    }
 }

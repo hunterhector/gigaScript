@@ -1,13 +1,12 @@
 package edu.cmu.cs.lti.gigascript.io;
 
+import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,77 +19,48 @@ import java.util.logging.Logger;
 public class CachedFileStorage extends CacheBasedStorage {
     public static Logger logger = Logger.getLogger(GigaDB.class.getName());
 
-    TObjectIntHashMap<Triple<String, String, String>> tupleCount = new TObjectIntHashMap<Triple<String, String, String>>();
-    Map<Triple<String, String, String>, Integer> tuplesId = new HashMap<Triple<String, String, String>, Integer>();
-
-
-    Map<Pair<Long, Long>, TObjectIntHashMap<Integer>> tupleCooccCount = new HashMap<Pair<Long, Long>, TObjectIntHashMap<Integer>>();
-    Map<Pair<Long, Long>, TObjectIntHashMap<Integer>> tupleReverseCooccCount = new HashMap<Pair<Long, Long>, TObjectIntHashMap<Integer>>();
-
-    int outputSuffix = 0;
-    String outputPrefix;
-    String outputTupleKeyword = "tuple";
-    String outputCooccKeyword = "coocc";
-    String outputReverseCooccKeyword = "coocc_r";
-
     public CachedFileStorage(Configuration config) {
+        super(config);
         outputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.prefix");
     }
 
     @Override
-    public long addGigaTuple(String arg0, String arg1, String relation) {
-        Triple<String, String, String> tuple = Triple.of(arg0, arg1, relation);
-        int id = tupleCount.size();
-        tuplesId.put(tuple, id);
-        tupleCount.adjustOrPutValue(tuple, 1, 1);
-        return id;
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
+        return cacheTuple(arg0,arg1,relation);
     }
 
     @Override
-    public void addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
-        Pair<Long, Long> tuplePair = Pair.of(t1, t2);
-        Pair<Long, Long> reverseTuplePair = Pair.of(t1, t2);
-
-        //store the natural order
-        if (tupleCooccCount.containsKey(tuplePair)) {
-            TObjectIntHashMap<Integer> directedTupleDistCount = new TObjectIntHashMap<Integer>();
-            directedTupleDistCount.put(distance, 1);
-            tupleCooccCount.put(tuplePair, directedTupleDistCount);
-        } else {
-            TObjectIntHashMap<Integer> tupleDistCount = tupleCooccCount.get(tuplePair);
-            tupleDistCount.adjustOrPutValue(distance, 1, 1);
-        }
-
-        //store the reverse order
-        if (tupleReverseCooccCount.containsKey(reverseTuplePair)) {
-            TObjectIntHashMap<Integer> undirectedTupleDistCount = new TObjectIntHashMap<Integer>();
-            undirectedTupleDistCount.put(distance, 1);
-            tupleReverseCooccCount.put(reverseTuplePair, undirectedTupleDistCount);
-        } else {
-            TObjectIntHashMap<Integer> tupleDistCount = tupleReverseCooccCount.get(reverseTuplePair);
-            tupleDistCount.adjustOrPutValue(distance, 1, 1);
-        }
+    public void addGigaBigram(long t1, long t2, int distance, int[][] equality) {
+       cacheBigram(t1,t2,distance,equality);
     }
 
-    private void writeTuple(Writer writer) throws IOException {
+    private void writeTuple(Writer writer, int id) throws IOException {
         for (Triple<String, String, String> tuple : tupleCount.keySet()) {
             writer.write(tuple.toString());
-            writer.write(" ");
-            writer.write(tupleCount.get(tuple));
-            writer.write(" ");
-            writer.write(tuplesId.get(tuple));
+            writer.write("\t" + tupleCount.get(tuple));
+            writer.write("\t"+ tuple2EntityType.get(tuple));
+            writer.write("\t" + id+"_"+tuplesId.get(tuple));
+            writer.write("\n");
         }
     }
 
-    private void writeBigram(Writer writer) throws IOException{
+    private void writeBigram(Writer writer, int id) throws IOException{
         for (Pair<Long, Long> tupleIdx : tupleCooccCount.keySet()){
-            writer.write(tupleIdx.toString());
-            writer.write(" ");
+            writer.write(id+"_"+tupleIdx.toString());
+            writer.write("\t");
             TObjectIntHashMap<Integer> counts = tupleCooccCount.get(tupleIdx);
             for (int dist :  counts.keySet()){
                 writer.write(dist+":"+counts.get(dist));
-                writer.write(" ");
+                writer.write(",");
             }
+              
+            TObjectIntHashMap<String> equalities = tupleEqualityCount.get(tupleIdx);
+            writer.write(equalities.get("E11")+",");
+            writer.write(equalities.get("E12")+",");
+            writer.write(equalities.get("E21")+",");
+            writer.write(equalities.get("E22"));
+
+            writer.write("\n");
         }
     }
 
@@ -102,27 +72,36 @@ public class CachedFileStorage extends CacheBasedStorage {
 
         try {
             tupleWriter = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(outputPrefix + outputTupleKeyword + outputSuffix)));
+                    new FileOutputStream(outputPrefix + outputTupleStoreName + outputFileId)));
 
-            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPrefix + outputCooccKeyword + outputSuffix)));
+            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPrefix + outputCooccStoreName + outputFileId)));
 
-            reverseCooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPrefix + outputReverseCooccKeyword + outputSuffix)));
+            reverseCooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPrefix + outputCooccStoreName + outputFileId + "r")));
 
-            writeTuple(tupleWriter);
-            writeBigram(cooccWriter);
-            writeBigram(reverseCooccWriter);
+            writeTuple(tupleWriter,outputFileId);
+            writeBigram(cooccWriter,outputFileId);
+            writeBigram(reverseCooccWriter,outputFileId);
         } catch (IOException ex) {
             System.err.println("Write file failure, I recommend you check it!");
             logger.log(Level.SEVERE,ex.getMessage(),ex);
+        }finally{
+            try {
+                if (tupleWriter != null) {
+                    tupleWriter.close();
+                }
+                if (cooccWriter != null) {
+                    cooccWriter.close();
+                }
+                if (reverseCooccWriter != null) {
+                    reverseCooccWriter.close();
+                }
+            } catch (IOException e) {
+                System.err.println("Close writer failure, I recommend you check it!");
+                e.printStackTrace();
+            }
         }
-
-        //clear memory
-        tupleCount = new TObjectIntHashMap<Triple<String, String, String>>();
-        tuplesId = new HashMap<Triple<String, String, String>, Integer>();
-
-        tupleCooccCount = new HashMap<Pair<Long, Long>, TObjectIntHashMap<Integer>>();
-        tupleReverseCooccCount = new HashMap<Pair<Long, Long>, TObjectIntHashMap<Integer>>();
-
-        outputSuffix++;
+        // clear memory
+        super.flush();
+        outputFileId++;
     }
 }

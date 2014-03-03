@@ -8,7 +8,10 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Created by zhengzhongliu on 2/25/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/25/14
+ * Time: 1:17 AM
  */
 public class Configuration {
     private final static Logger LOGGER = Logger.getLogger(Configuration.class.getName());

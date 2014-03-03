@@ -9,7 +9,10 @@ import edu.jhu.agiga.AgigaToken;
 import java.io.PrintStream;
 
 /**
- * Created by zhengzhongliu on 2/12/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/12/14
+ * Time: 1:17 AM
  */
 public class IOUtils {
 

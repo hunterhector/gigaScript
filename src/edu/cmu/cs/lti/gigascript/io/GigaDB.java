@@ -1,8 +1,8 @@
 package edu.cmu.cs.lti.gigascript.io;
 
 
+import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.sql.*;
@@ -13,17 +13,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by zhengzhongliu on 2/25/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/25/14
+ * Time: 1:16 AM
  */
 public class GigaDB extends CacheBasedStorage{
     public static Logger logger = Logger.getLogger(GigaDB.class.getName());
 
     private Connection conn = null;
     private String dbPath;
-    private String tupleTableName;
-    private String bigramTableName;
 
     public GigaDB(Configuration config) {
+        super(config);
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
@@ -31,8 +33,6 @@ public class GigaDB extends CacheBasedStorage{
             logger.log(Level.SEVERE, "Did not find appropriate JDBC class");
         }
         dbPath = config.get("edu.cmu.cs.lti.gigaScript.db.path");
-        tupleTableName = config.get("edu.cmu.cs.lti.gigaScript.tupleTableName");
-        bigramTableName = config.get("edu.cmu.cs.lti.gigaScript.bigramTableName");
         connectOrCreate();
     }
 
@@ -74,12 +74,12 @@ public class GigaDB extends CacheBasedStorage{
     }
 
     private void createTables() throws SQLException {
-        if (!existTable(tupleTableName)) {
-            logger.log(Level.INFO, String.format("Table [%s] does not exists, creating a new one", tupleTableName));
+        if (!existTable(outputTupleStoreName)) {
+            logger.log(Level.INFO, String.format("Table [%s] does not exists, creating a new one", outputTupleStoreName));
             createTupleTable();
         }
-        if (!existTable(bigramTableName)) {
-            logger.log(Level.INFO, String.format("Table [%s] does not exists, creating a new one", bigramTableName));
+        if (!existTable(outputCooccStoreName)) {
+            logger.log(Level.INFO, String.format("Table [%s] does not exists, creating a new one", outputCooccStoreName));
             createBigramTable();
         }
     }
@@ -95,7 +95,7 @@ public class GigaDB extends CacheBasedStorage{
                     " Arg1          CHAR(50)     NOT NULL, " +
                     " Rel        CHAR(50)   NOT NULL, " +
                     " Count         INT" +
-                    ")", tupleTableName);
+                    ")", outputTupleStoreName);
             stmt.executeUpdate(sql);
             stmt.close();
         } catch (Exception e) {
@@ -148,7 +148,7 @@ public class GigaDB extends CacheBasedStorage{
                     "E22 INT NOT NULL," +
                     "FOREIGN KEY(Tuple1) REFERENCES Tuples(Id)," +
                     "FOREIGN KEY(Tuple2) REFERENCES Tuples(Id)," +
-                    "PRIMARY KEY (Tuple1, Tuple2))", bigramTableName);
+                    "PRIMARY KEY (Tuple1, Tuple2))", outputCooccStoreName);
             stmt.executeUpdate(sql);
             stmt.close();
         } catch (Exception e) {
@@ -158,16 +158,16 @@ public class GigaDB extends CacheBasedStorage{
         logger.log(Level.INFO, "Bigram Table created successfully");
     }
 
-    public long addGigaTuple(String arg0, String arg1, String relation) {
-        arg0 = arg0.replace("'", "''");
-        arg1 = arg1.replace("'", "''");
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
+        String arg0Hw = arg0.getHeadWordLemma().replace("'", "''");
+        String arg1Hw = arg1.getHeadWordLemma().replace("'", "''");
 
         String insertSql = String.format("INSERT OR IGNORE INTO %s (Arg0,Arg1,Rel,Count) " +
                 "  VALUES (  '%s', '%s' , '%s', 1 );",
-                tupleTableName, arg0, arg1, relation);
+                outputTupleStoreName, arg0Hw, arg1Hw, relation);
 
         String updateSql = String.format("UPDATE %s SET Count = Count + 1 WHERE " +
-                "Arg0 = '%s' AND Arg1 = '%s' AND Rel = '%s';",tupleTableName,arg0,arg1,relation);
+                "Arg0 = '%s' AND Arg1 = '%s' AND Rel = '%s';", outputTupleStoreName,arg0Hw,arg1Hw,relation);
 
         logger.log(Level.INFO, insertSql);
 
@@ -203,11 +203,11 @@ public class GigaDB extends CacheBasedStorage{
         return -1;
     }
 
-    public void addGigaBigram(long t1, long t2, int distance, boolean[][] equality) {
+    public void addGigaBigram(long t1, long t2, int distance, int[][] equality) {
         //1. search for the record
         try {
             Statement stmt = conn.createStatement();
-            ResultSet directonalRs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE Tuple1=%s AND Tuple1=%s;", bigramTableName, t1, t2));
+            ResultSet directonalRs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE Tuple1=%s AND Tuple1=%s;", outputCooccStoreName, t1, t2));
 
             Map<String, Integer> directionalCounts = getBigramCountsToIncrement(distance, false);
 
@@ -231,13 +231,13 @@ public class GigaDB extends CacheBasedStorage{
 
                     int incrementalValue = 1;
                     if (countEntry.getKey().equals("E11")) {
-                        incrementalValue = equality[0][0] ? 1 : 0;
+                        incrementalValue = equality[0][0];
                     } else if (countEntry.getKey().equals("E12")) {
-                        incrementalValue = equality[0][1] ? 1 : 0;
+                        incrementalValue = equality[0][1];
                     } else if (countEntry.getKey().equals("E21")) {
-                        incrementalValue = equality[1][0] ? 1 : 0;
+                        incrementalValue = equality[1][0];
                     } else if (countEntry.getKey().equals("E22")) {
-                        incrementalValue = equality[1][1] ? 1 : 0;
+                        incrementalValue = equality[1][1];
                     }
 
                     sqlBuffer.append(countEntry.getValue() + incrementalValue);
@@ -247,7 +247,7 @@ public class GigaDB extends CacheBasedStorage{
                     }
                 }
 
-                String sqlIncrement = String.format("UPDATE %s SET %s WHERE Tuple1=%s AND Tuple1=%s;", bigramTableName, sqlBuffer.toString(), t1, t2);
+                String sqlIncrement = String.format("UPDATE %s SET %s WHERE Tuple1=%s AND Tuple1=%s;", outputCooccStoreName, sqlBuffer.toString(), t1, t2);
             } else {
                 String columnNames = "";
                 String values = "";
@@ -263,7 +263,7 @@ public class GigaDB extends CacheBasedStorage{
                         values += ", ";
                     }
                 }
-                String sqlNewEntry = String.format("INSERT INTO %s (%s) VALUES (%s);", bigramTableName, columnNames, values);
+                String sqlNewEntry = String.format("INSERT INTO %s (%s) VALUES (%s);", outputCooccStoreName, columnNames, values);
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);

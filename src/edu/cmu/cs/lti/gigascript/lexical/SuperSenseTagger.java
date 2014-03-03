@@ -1,7 +1,10 @@
 package edu.cmu.cs.lti.gigascript.lexical;
 
 /**
- * Created by zhengzhongliu on 2/26/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/26/14
+ * Time: 1:17 AM
  */
 public class SuperSenseTagger {
 }

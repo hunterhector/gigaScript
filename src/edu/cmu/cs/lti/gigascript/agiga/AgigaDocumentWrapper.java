@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by zhengzhongliu on 2/26/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/26/14
+ * Time: 1:16 AM
  */
 public class AgigaDocumentWrapper {
     Table<Integer, Integer, SemanticType> typeMapping;

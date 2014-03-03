@@ -28,12 +28,14 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 /**
- * Created by zhengzhongliu on 2/25/14.
+ * Created with IntelliJ IDEA.
+ * User: zhengzhongliu
+ * Date: 2/25/14
+ * Time: 6:03 PM
  */
 public class FullSystemRunner {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, ConfigurationException {
-
         String propPath = "settings.properties";
         if (args.length < 1) {
             System.err.println("Missing property file argument! Will try default property.");
@@ -44,14 +46,12 @@ public class FullSystemRunner {
         Configuration config = new Configuration(new File(propPath));
 
         Logger rootLogger = Logger.getLogger("edu.cmu.cs.lti");
-        FileHandler fh = new FileHandler(config.get("edu.cmu.cs.lti.gigaScript.clausie.errorOut"));
+        FileHandler fh = new FileHandler(config.get("edu.cmu.cs.lti.gigaScript.errorOut"));
         rootLogger.addHandler(fh);
         rootLogger.setUseParentHandlers(false);
 
         //Config logger for errors
         Logger logger = Logger.getLogger(FullSystemRunner.class.getName());
-//        logger.setUseParentHandlers(false);
-//        logger.addHandler(fh);
         SimpleFormatter formatter = new SimpleFormatter();
         fh.setFormatter(formatter);
 
@@ -83,16 +83,14 @@ public class FullSystemRunner {
             System.exit(1);
         }
 
+        String clausIeConfigPath = config.get("edu.cmu.cs.lti.gigaScript.clausie.properties");
+        OutputStream out = System.out;
+        NoParseClausIE npClauseIe = new NoParseClausIE(out,clausIeConfigPath);
+
         long startTime = System.currentTimeMillis();
 
-        for (int i = 0; i < listOfFiles.length; i++) {
-            File currentFile = listOfFiles[i];
-
+        for (File currentFile : listOfFiles) {
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
-            //Prepare IO
-            OutputStream out = System.out;
-            NoParseClausIE npClauseIe = new NoParseClausIE(out);
-
             System.out.println("Processing achrive: "+ currentFile.getName());
 
             for (AgigaDocument doc : reader) {
@@ -118,18 +116,17 @@ public class FullSystemRunner {
                             }
 
                             //assume in triple mode
-                            AgigaArgument arg0s = populateArguments(constituentIndices.get(0), wrapper, sent);
-                            AgigaArgument arg1s = populateArguments(constituentIndices.get(2), wrapper, sent);
+                            AgigaArgument arg0s = createArgument(constituentIndices.get(0), wrapper, sent);
+                            AgigaArgument arg1s = createArgument(constituentIndices.get(2), wrapper, sent);
 
                             String relation = null;
-                            String relationPosition = "";
                             if (constituentIndices.get(1).get(0) < 0) {
                                 relation = p.relation();
                             } else {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
                             }
-                            relationPosition=""+constituentIndices.get(1).get(0);
 
+//                            String relationPosition = ""+constituentIndices.get(1).get(0);
 //                            System.out.println(p);
 //                            System.out.println("Arg0s: "+arg0s+", Arg1s: "+arg1s+", Relation: "+" "+relationPosition+"@"+relation);
 
@@ -167,30 +164,32 @@ public class FullSystemRunner {
 
                         int tupleDist = t2 - t1;
                         int sentDist = tuple2.getLeft().getSentenceIndex() - tuple1.getLeft().getSentenceIndex();
-                        boolean[][] equalities = new boolean[2][2];
+                        int[][] equalities = new int[2][2];
 
-                        equalities[0][0] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getLeft());
-                        equalities[0][1] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getRight());
-                        equalities[1][0] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft());
-                        equalities[1][1] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight());
+                        equalities[0][0] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getLeft()) ? 1 : 0;
+                        equalities[0][1] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getRight())? 1 : 0;
+                        equalities[1][0] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft())? 1 : 0;
+                        equalities[1][1] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight())? 1 : 0;
 
-//                        for (long t1Id : tuple2StorageIdMapping.get(tuple1Keys)) {
-//                            if (t1Id < 0)
-//                                continue;
-//                            for (long t2Id : tuple2StorageIdMapping.get(tuple2Keys)) {
-//                                if (t2Id < 0){
-//                                    continue;
-//                                }
-//                                gigaStorage.addGigaBigram(t1Id, t2Id, tupleDist, equalities);
-//                            }
-//                        }
+                        for (long t1Id : tuple2StorageIdMapping.get(tuple1Keys)) {
+                            if (t1Id < 0)
+                                continue;
+                            for (long t2Id : tuple2StorageIdMapping.get(tuple2Keys)) {
+                                if (t2Id < 0){
+                                    continue;
+                                }
+                                gigaStorage.addGigaBigram(t1Id, t2Id, tupleDist, equalities);
+                            }
+                        }
                     }
                 }
+
+                gigaStorage.flush();
                 System.out.print("\r" + reader.getNumDocs());
             }
 
             //flush release memory
-            gigaStorage.flush();
+//            gigaStorage.flush();
         }
 
         long totalTime = System.currentTimeMillis() - startTime;
@@ -200,16 +199,20 @@ public class FullSystemRunner {
 
     private static List<Long> saveTuple(Triple<AgigaArgument, AgigaArgument, String> tuple, GigaStorage store) {
         List<Long> tupleIds = new ArrayList<Long>();
-        for (String arg0 : tuple.getLeft().getAlternativeForms()) {
-            for (String arg1 : tuple.getMiddle().getAlternativeForms()) {
-                long tupleId = store.addGigaTuple(arg0, arg1, tuple.getRight());
-                tupleIds.add(tupleId);
-            }
-        }
+
+        AgigaArgument leftArg = tuple.getLeft();
+        AgigaArgument rightArg = tuple.getMiddle();
+        String relation = tuple.getRight();
+
+        //the orignal tuples
+        long tupleId = store.addGigaTuple(leftArg,rightArg,relation);
+
+        tupleIds.add(tupleId);
+
         return tupleIds;
     }
 
-    private static AgigaArgument populateArguments( List<Integer> indices, AgigaDocumentWrapper wrapper, AgigaSentence sent) {
+    private static AgigaArgument createArgument(List<Integer> indices, AgigaDocumentWrapper wrapper, AgigaSentence sent) {
         Pair<String, Integer> semanticTypeWithIndex = wrapper.getArgumentSemanticType(sent, indices);
 
         String type = semanticTypeWithIndex.getLeft();
@@ -224,11 +227,8 @@ public class FullSystemRunner {
             lemma = AgigaUtil.getLemma(sent, indices.get(0));
         }
 
-        argument.addAlternativeForms(lemma);
-
-        //when there is a nontrivial type
-        if (type != null && !type.equals("O"))
-            argument.addAlternativeForms(type);
+        argument.setHeadWordLemma(lemma);
+        argument.setEntityType(type);
 
         return argument;
     }
