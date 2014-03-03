@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: zhengzhongliu
- * Date: 2/26/14
- * Time: 1:16 AM
+ * Created by zhengzhongliu on 2/26/14.
  */
 public class AgigaDocumentWrapper {
     Table<Integer, Integer, SemanticType> typeMapping;
@@ -66,7 +63,6 @@ public class AgigaDocumentWrapper {
             return token.getNerTag();
         }
 
-
         // if the previous one didn't give anything, use the coreferenced type
         SemanticType type = typeMapping.get(sentence.getSentIdx(), index);
         return type == null ? null : type.getType();
@@ -78,31 +74,29 @@ public class AgigaDocumentWrapper {
      * @param indices
      * @return
      */
-    public Pair<String, Integer> getArgumentSemanticType(AgigaSentence sentence, List<Integer> indices) {
-        if (indices.isEmpty()) {
+    public String getArgumentSemanticType(AgigaSentence sentence, AgigaToken headword, List<Integer> indices) {
+        if (headword == null) {
             return null;
-        } else if (indices.get(0) < 0) {
-            return null;
-        } else {
-            AgigaToken token = sentence.getTokens().get(indices.get(0));
-            String headWordType = getSemanticType(sentence, token);
+        }  else {
+
+            String headWordType = getSemanticType(sentence, headword);
 
             if (headWordType != null) {
-                return Pair.of(headWordType, indices.get(0));
+                return headWordType;
             } else {
                 String phraseSemanticType = null;
-                int semanticWordIndex = -1;
 
                 for (Integer i : indices) {
-                    String newType = getSemanticType(sentence, token);
+                    String newType = getSemanticType(sentence, sentence.getTokens().get(i));
                     if (newType != null) {
                         phraseSemanticType = newType;
-                        semanticWordIndex = i;
                     }
                 }
-                return Pair.of(phraseSemanticType, semanticWordIndex);
+                return phraseSemanticType;
             }
         }
     }
+
+
 
 }

@@ -17,6 +17,7 @@ import java.util.Map;
 public class AgigaSentenceWrapper {
     List<AgigaTypedDependency> basicDependencies;
     Map<Integer, Integer> toGov = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> toDep = new HashMap<Integer, Integer>();
     List<AgigaToken> tokens;
 
     public AgigaSentenceWrapper(AgigaSentence sentence) {
@@ -25,6 +26,7 @@ public class AgigaSentenceWrapper {
 
         for (AgigaTypedDependency dep : basicDependencies) {
             toGov.put(dep.getDepIdx(), dep.getGovIdx());
+            toDep.put(dep.getGovIdx(), dep.getDepIdx());
         }
     }
 
@@ -33,25 +35,23 @@ public class AgigaSentenceWrapper {
         return govIdx == -1 ? null : tokens.get(govIdx);
     }
 
-//    public AgigaToken getHeadWordFromPhrase(List<Integer> indices) {
-//        if (indices.size() == 1) {
-//            return tokens.get(indices.get(0));
-//        } else {
-//            int headIndexPosition = 0;
-//            AgigaToken tempHeadNode = tokens.get(headIndexPosition);
-//            for (int i = 0; i < indices.size(); i++) {
-//                AgigaToken token = tokens.get(i);
-//                AgigaToken gov = toGov(token);
-//
-//                if (gov == null){
-//                   return token;
-//                }else if (gov.equals(token)){
-//                    return;
-//                }
-//
-//            }
-//
-//            return tokens.get(indices.get(headIndexPosition));
-//        }
-//    }
+    private AgigaToken toDep(AgigaToken token) {
+        int depIdx = toDep.get(token.getTokIdx());
+        return depIdx == -1 ? null : tokens.get(depIdx);
+    }
+
+    public int getHeadWordIndex(List<Integer> indices) {
+        int firstIndex = indices.get(0);
+        AgigaToken firstToken = tokens.get(firstIndex);
+
+        String pos = firstToken.getPosTag();
+
+        if (pos.equals("PP") || pos.equals("TO") || pos.equals("IN")){
+            if (toDep.containsKey(firstIndex)){
+                return toDep.get(firstIndex);
+            }
+        }
+
+        return firstIndex;
+    }
 }

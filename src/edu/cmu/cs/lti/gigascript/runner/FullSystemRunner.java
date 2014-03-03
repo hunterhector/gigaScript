@@ -4,16 +4,15 @@ import de.mpii.clausie.NoParseClausIE;
 import de.mpii.clausie.Proposition;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaDocumentWrapper;
+import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaUtil;
 import edu.cmu.cs.lti.gigascript.io.CacheBasedStorage;
 import edu.cmu.cs.lti.gigascript.io.CachedFileStorage;
 import edu.cmu.cs.lti.gigascript.io.GigaDB;
 import edu.cmu.cs.lti.gigascript.io.GigaStorage;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
-import edu.jhu.agiga.AgigaDocument;
-import edu.jhu.agiga.AgigaPrefs;
-import edu.jhu.agiga.AgigaSentence;
-import edu.jhu.agiga.StreamingDocumentReader;
+import edu.cmu.cs.lti.gigascript.util.IOUtils;
+import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -94,7 +93,7 @@ public class FullSystemRunner {
             System.out.println("Processing achrive: "+ currentFile.getName());
 
             for (AgigaDocument doc : reader) {
-                AgigaDocumentWrapper wrapper = new AgigaDocumentWrapper(doc);
+                AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
 
                 //A linked set could retain the sequence and filter identical triples
                 Set<Triple<AgigaArgument,AgigaArgument, String>> allTuples = new LinkedHashSet<Triple<AgigaArgument,AgigaArgument, String>>();
@@ -107,6 +106,8 @@ public class FullSystemRunner {
 
 //                        IOUtils.printSentence(sent,new PrintStream(System.out));
 
+                        AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
+
                         for (Proposition p : npClauseIe.getPropositions()) {
                             List<List<Integer>> constituentIndices = p.indices();
 
@@ -115,12 +116,18 @@ public class FullSystemRunner {
                                 continue;
                             }
 
-                            //assume in triple mode
-                            AgigaArgument arg0s = createArgument(constituentIndices.get(0), wrapper, sent);
-                            AgigaArgument arg1s = createArgument(constituentIndices.get(2), wrapper, sent);
+//                            System.out.println("-----");
+//                            System.out.println(p.toString());
+//                            System.out.println(constituentIndices.get(0));
+//                            System.out.println(constituentIndices.get(1));
+//                            System.out.println(constituentIndices.get(2));
 
-                            String relation = null;
-                            if (constituentIndices.get(1).get(0) < 0) {
+                            //assume in triple mode
+                            AgigaArgument arg0s = createArgument(constituentIndices.get(0), docWrapper,sentenceWrapper, sent);
+                            AgigaArgument arg1s = createArgument(constituentIndices.get(2), docWrapper,sentenceWrapper, sent);
+
+                            String relation;
+                            if (constituentIndices.get(1).size() == 0 || constituentIndices.get(1).get(0) < 0) {
                                 relation = p.relation();
                             } else {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
@@ -134,7 +141,8 @@ public class FullSystemRunner {
                         }
                     } catch (NullPointerException e) {
                         logger.log(Level.WARNING, String.format("Giving up on Null Pointer.\n%s", AgigaUtil.getSentenceString(sent)));
-
+                        logger.log(Level.WARNING, e.getMessage(), e);
+//                        e.printStackTrace();
                     } catch (StackOverflowError e) {
                         logger.log(Level.WARNING, String.format("Giving up on StackoverFlow.\n%s", AgigaUtil.getSentenceString(sent)));
                     }
@@ -166,10 +174,10 @@ public class FullSystemRunner {
                         int sentDist = tuple2.getLeft().getSentenceIndex() - tuple1.getLeft().getSentenceIndex();
                         int[][] equalities = new int[2][2];
 
-                        equalities[0][0] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getLeft()) ? 1 : 0;
-                        equalities[0][1] = wrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getRight())? 1 : 0;
-                        equalities[1][0] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft())? 1 : 0;
-                        equalities[1][1] = wrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight())? 1 : 0;
+                        equalities[0][0] = docWrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getLeft()) ? 1 : 0;
+                        equalities[0][1] = docWrapper.sameArgument(tuple1Keys.getLeft(), tuple2Keys.getRight())? 1 : 0;
+                        equalities[1][0] = docWrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getLeft())? 1 : 0;
+                        equalities[1][1] = docWrapper.sameArgument(tuple1Keys.getRight(), tuple2Keys.getRight())? 1 : 0;
 
                         for (long t1Id : tuple2StorageIdMapping.get(tuple1Keys)) {
                             if (t1Id < 0)
@@ -184,12 +192,12 @@ public class FullSystemRunner {
                     }
                 }
 
-                gigaStorage.flush();
+//                gigaStorage.flush();
                 System.out.print("\r" + reader.getNumDocs());
             }
 
             //flush release memory
-//            gigaStorage.flush();
+            gigaStorage.flush();
         }
 
         long totalTime = System.currentTimeMillis() - startTime;
@@ -204,6 +212,8 @@ public class FullSystemRunner {
         AgigaArgument rightArg = tuple.getMiddle();
         String relation = tuple.getRight();
 
+//        System.out.println(leftArg.getHeadWordLemma()+" "+rightArg.getHeadWordLemma()+" "+relation);
+
         //the orignal tuples
         long tupleId = store.addGigaTuple(leftArg,rightArg,relation);
 
@@ -212,20 +222,14 @@ public class FullSystemRunner {
         return tupleIds;
     }
 
-    private static AgigaArgument createArgument(List<Integer> indices, AgigaDocumentWrapper wrapper, AgigaSentence sent) {
-        Pair<String, Integer> semanticTypeWithIndex = wrapper.getArgumentSemanticType(sent, indices);
+    private static AgigaArgument createArgument(List<Integer> indices, AgigaDocumentWrapper docWrapper, AgigaSentenceWrapper sentenceWrapper, AgigaSentence sent) {
+        int headwordIndex = sentenceWrapper.getHeadWordIndex(indices);
+        AgigaToken headWord = sent.getTokens().get(headwordIndex);
+        String type = docWrapper.getArgumentSemanticType(sent, headWord,indices);
 
-        String type = semanticTypeWithIndex.getLeft();
-        int keywordIndex = semanticTypeWithIndex.getRight() > 0? semanticTypeWithIndex.getRight() : indices.get(0);
+        AgigaArgument argument = new AgigaArgument(sent.getSentIdx(),indices.get(0));
 
-        AgigaArgument argument = new AgigaArgument(sent.getSentIdx(),keywordIndex);
-
-        String lemma;
-        if (keywordIndex > 0) {
-            lemma = AgigaUtil.getLemma(sent, keywordIndex);
-        } else {
-            lemma = AgigaUtil.getLemma(sent, indices.get(0));
-        }
+        String lemma= AgigaUtil.getLemma(sent, headwordIndex);
 
         argument.setHeadWordLemma(lemma);
         argument.setEntityType(type);
