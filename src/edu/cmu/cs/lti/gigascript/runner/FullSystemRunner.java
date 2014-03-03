@@ -192,12 +192,12 @@ public class FullSystemRunner {
                     }
                 }
 
-//                gigaStorage.flush();
+                gigaStorage.flush();
                 System.out.print("\r" + reader.getNumDocs());
             }
 
             //flush release memory
-            gigaStorage.flush();
+//            gigaStorage.flush();
         }
 
         long totalTime = System.currentTimeMillis() - startTime;

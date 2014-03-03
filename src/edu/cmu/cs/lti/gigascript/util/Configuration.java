@@ -22,6 +22,9 @@ public class Configuration {
 
     public Configuration(File configurationFile) throws IOException {
         configFile = configurationFile;
+        if (!configFile.exists()){
+            throw new IOException("Cannot read config file");
+        }
         properties = new Properties();
         properties.load(new FileInputStream(configurationFile));
     }
@@ -31,7 +34,7 @@ public class Configuration {
 
         if (value == null){
             try {
-                throw new ConfigurationException(key + "not specified in "+configFile.getCanonicalPath());
+                throw new ConfigurationException(key + " not specified in "+configFile.getCanonicalPath());
             } catch (ConfigurationException e) {
                 e.printStackTrace();
             } catch (IOException e) {
