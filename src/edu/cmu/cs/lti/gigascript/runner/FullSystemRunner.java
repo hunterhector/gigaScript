@@ -133,10 +133,6 @@ public class FullSystemRunner {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
                             }
 
-//                            String relationPosition = ""+constituentIndices.get(1).get(0);
-//                            System.out.println(p);
-//                            System.out.println("Arg0s: "+arg0s+", Arg1s: "+arg1s+", Relation: "+" "+relationPosition+"@"+relation);
-
                             allTuples.add(Triple.of(arg0s, arg1s, relation));
                         }
                     } catch (NullPointerException e) {
