@@ -58,4 +58,12 @@ public class Configuration {
         String value =  getOrElse(key,"true");
         return value.equals("true");
     }
+
+    public int getInt(String key){
+        String value = get(key);
+        if (value == null){
+            return 1;
+        }
+        return Integer.parseInt(value);
+    }
 }

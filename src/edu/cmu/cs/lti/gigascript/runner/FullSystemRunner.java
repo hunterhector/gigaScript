@@ -2,7 +2,6 @@ package edu.cmu.cs.lti.gigascript.runner;
 
 import de.mpii.clausie.NoParseClausIE;
 import de.mpii.clausie.Proposition;
-import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaDocumentWrapper;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaUtil;
@@ -10,6 +9,7 @@ import edu.cmu.cs.lti.gigascript.io.CacheBasedStorage;
 import edu.cmu.cs.lti.gigascript.io.CachedFileStorage;
 import edu.cmu.cs.lti.gigascript.io.GigaDB;
 import edu.cmu.cs.lti.gigascript.io.GigaStorage;
+import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,7 +32,6 @@ import java.util.logging.SimpleFormatter;
  * Time: 6:03 PM
  */
 public class FullSystemRunner {
-
     public static void main(String[] args) throws IOException, ClassNotFoundException, ConfigurationException {
         String propPath = "settings.properties";
         if (args.length < 1) {
@@ -64,6 +63,8 @@ public class FullSystemRunner {
         } else {
             gigaStorage = new CachedFileStorage(config);
         }
+
+        int docNum2Flush = config.getInt("edu.cmu.cs.lti.gigaScript.flush.size");
 
         //Prepare data source
         String corpusPath = config.get("edu.cmu.cs.lti.gigaScript.agiga.dir");
@@ -190,17 +191,19 @@ public class FullSystemRunner {
                         }
                     }
                 }
-
-                gigaStorage.flush();
-                System.exit(1);
+                if (reader.getNumDocs() % docNum2Flush == 0) {
+                    gigaStorage.flush();
+                }
                 if (singleProcssMode) {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
                 } else {
                     //this will be more readable if we would like to direct the console output to file
-                    System.out.println(reader.getNumDocs());
+                    System.out.print(reader.getNumDocs()+" ");
                 }
             }
+
+            gigaStorage.flush();
 
             System.out.println();
 
