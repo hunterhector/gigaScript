@@ -119,11 +119,11 @@ public class FullSystemRunner {
                                 continue;
                             }
 
-                            System.out.println("-----");
-                            System.out.println(p.toString());
-                            System.out.println(constituentIndices.get(0));
-                            System.out.println(constituentIndices.get(1));
-                            System.out.println(constituentIndices.get(2));
+//                            System.out.println("-----");
+//                            System.out.println(p.toString());
+//                            System.out.println(constituentIndices.get(0));
+//                            System.out.println(constituentIndices.get(1));
+//                            System.out.println(constituentIndices.get(2));
 
                             //assume in triple mode
                             AgigaArgument arg0s = createArgument(constituentIndices.get(0), docWrapper, sentenceWrapper, sent);
