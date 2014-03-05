@@ -13,7 +13,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by zhengzhongliu on 2/26/14.
+ * Created with IntelliJ IDEA.
+ * User: Hector, Zhengzhong Liu
+ * Date: 2/26/14
+ * Time: 11:16 PM
  */
 public class AgigaDocumentWrapper {
     Table<Integer, Integer, SemanticType> typeMapping;
@@ -79,22 +82,23 @@ public class AgigaDocumentWrapper {
         if (headword == null) {
             return null;
         }  else {
-
             String headWordType = getSemanticType(sentence, headword);
 
-            if (headWordType != null) {
-                return headWordType;
-            } else {
-                String phraseSemanticType = null;
-
-                for (Integer i : indices) {
-                    String newType = getSemanticType(sentence, sentence.getTokens().get(i));
-                    if (newType != null) {
-                        phraseSemanticType = newType;
-                    }
-                }
-                return phraseSemanticType;
-            }
+            //phrase type is too noisy
+            return headWordType;
+//            if (headWordType != null) {
+//                return headWordType;
+//            } else {
+//                String phraseSemanticType = null;
+//
+//                for (Integer i : indices) {
+//                    String newType = getSemanticType(sentence, sentence.getTokens().get(i));
+//                    if (newType != null) {
+//                        phraseSemanticType = newType;
+//                    }
+//                }
+//                return phraseSemanticType;
+//            }
         }
     }
 

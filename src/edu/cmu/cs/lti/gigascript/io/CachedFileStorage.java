@@ -23,9 +23,13 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     private String logPath;
 
+    String tupleOutputPrefix;
+    String bigramOutputPrefix;
+
     public CachedFileStorage(Configuration config) {
         super(config);
-        outputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.prefix");
+        tupleOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.tuple.prefix");
+        bigramOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.bigram.prefix");
         logPath = config.get("edu.cmu.cs.lti.gigaScript.log");
     }
 
@@ -46,7 +50,7 @@ public class CachedFileStorage extends CacheBasedStorage {
             iter.advance();
             writer.write(iter.key().toString());//the key is the tuple, a primary key
             int tupleId = iter.value();
-            writer.write("\t"+ tupleId);
+            writer.write("\t"+ tupleId+"_"+outputFileId);
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t"+ tupleEntityTypes.get(tupleId));
             writer.write("\n");
@@ -55,7 +59,7 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     private void writeBigram(Writer writer) throws IOException{
         for (Cell<Long,Long,BigramInfo> cell  : bigramInfoTable.cellSet()){
-            writer.write(cell.getRowKey()+"\t"+cell.getColumnKey()+"\t"); //this pair is the primary key
+            writer.write(cell.getRowKey()+","+cell.getColumnKey()+"_"+outputFileId+"\t"); //this pair is the primary key
             BigramInfo info = cell.getValue();
 
             IOUtils.writeMap(writer,info.getSentenceDistanceCount(),":",",");
@@ -80,8 +84,8 @@ public class CachedFileStorage extends CacheBasedStorage {
 
         try {
             tupleWriter = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(outputPrefix + outputTupleStoreName + outputFileId)));
-            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPrefix + outputCooccStoreName + outputFileId)));
+                    new FileOutputStream(tupleOutputPrefix + outputTupleStoreName + outputFileId)));
+            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(bigramOutputPrefix + outputCooccStoreName + outputFileId)));
 
             writeTuple(tupleWriter);
             writeBigram(cooccWriter);

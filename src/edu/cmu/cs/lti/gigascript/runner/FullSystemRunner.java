@@ -89,6 +89,7 @@ public class FullSystemRunner {
         NoParseClausIE npClauseIe = new NoParseClausIE(out, clausIeConfigPath);
 
         long startTime = System.currentTimeMillis();
+        long batchStartTime = startTime;
 
         for (File currentFile : listOfFiles) {
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
@@ -118,11 +119,11 @@ public class FullSystemRunner {
                                 continue;
                             }
 
-//                            System.out.println("-----");
-//                            System.out.println(p.toString());
-//                            System.out.println(constituentIndices.get(0));
-//                            System.out.println(constituentIndices.get(1));
-//                            System.out.println(constituentIndices.get(2));
+                            System.out.println("-----");
+                            System.out.println(p.toString());
+                            System.out.println(constituentIndices.get(0));
+                            System.out.println(constituentIndices.get(1));
+                            System.out.println(constituentIndices.get(2));
 
                             //assume in triple mode
                             AgigaArgument arg0s = createArgument(constituentIndices.get(0), docWrapper, sentenceWrapper, sent);
@@ -191,6 +192,7 @@ public class FullSystemRunner {
                 }
 
                 gigaStorage.flush();
+                System.exit(1);
                 if (singleProcssMode) {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
@@ -202,11 +204,12 @@ public class FullSystemRunner {
 
             System.out.println();
 
-            long batchTime = System.currentTimeMillis() - startTime;
+            long batchTime = System.currentTimeMillis() - batchStartTime;
             int numDocsInBatch = reader.getNumDocs();
             double batchTimeInMinute = batchTime * 1.0 / 6e4;
             System.out.println(String.format("Process %d document in %.2f minutes in this batch, Average speed: %.2f doc/min.", numDocsInBatch, batchTimeInMinute, numDocsInBatch / batchTimeInMinute));
 
+            batchStartTime = System.currentTimeMillis();
             //flush release memory
 //            gigaStorage.flush();
         }

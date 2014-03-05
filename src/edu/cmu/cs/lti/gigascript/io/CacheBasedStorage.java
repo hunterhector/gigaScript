@@ -31,7 +31,6 @@ public abstract class CacheBasedStorage extends GigaStorage {
     boolean hasNoTuples = true;
 
     int outputFileId = 0;
-    String outputPrefix;
     String outputTupleStoreName = "Tuples";
     String outputCooccStoreName = "BigramCounts";
 

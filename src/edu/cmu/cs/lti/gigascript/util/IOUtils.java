@@ -49,7 +49,7 @@ public class IOUtils {
         String sep = "";
         while (iter.hasNext()){
             writer.write(sep);
-            writer.write(iter.next());
+            writer.write(iter.next()+"");
             sep = interSep;
         }
 
