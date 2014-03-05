@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.gigascript.agiga;
+package edu.cmu.cs.lti.gigascript.model;
 
 import edu.cmu.cs.lti.gigascript.util.Joiners;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -24,10 +24,6 @@ public class AgigaArgument {
     // store alternative forms of the argument in order to make generization possible
     // for example, we could save the entity type of the argument here
     private List<String> alternativeForms;
-
-    public AgigaArgument() {
-
-    }
 
     public AgigaArgument(int sentenceIndex, int keywordTokenIndex) {
         this.keywordTokenIndex = keywordTokenIndex;

@@ -1,7 +1,7 @@
 package edu.cmu.cs.lti.gigascript.io;
 
 
-import edu.cmu.cs.lti.gigascript.agiga.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 
 import java.io.File;
@@ -196,20 +196,20 @@ public class GigaDB extends CacheBasedStorage{
             logger.log(Level.INFO, "Update by the sql " + rChanged);
             return rs.getLong(1);
         } catch (SQLException e) {
-            logger.log(Level.SEVERE,e.getMessage(),e);
+            logger.log(Level.SEVERE, e.getMessage(), e);
         } finally {
             ps.close();
         }
         return -1;
     }
 
-    public void addGigaBigram(long t1, long t2, int distance, int[][] equality) {
+    public void addGigaBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality) {
         //1. search for the record
         try {
             Statement stmt = conn.createStatement();
             ResultSet directonalRs = stmt.executeQuery(String.format("SELECT * FROM %s WHERE Tuple1=%s AND Tuple1=%s;", outputCooccStoreName, t1, t2));
 
-            Map<String, Integer> directionalCounts = getBigramCountsToIncrement(distance, false);
+            Map<String, Integer> directionalCounts = getBigramCountsToIncrement(sentDistance, false);
 
             while (directonalRs.next()) {
                 for (String countName : directionalCounts.keySet()) {

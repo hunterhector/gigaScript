@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.gigascript.agiga;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import edu.cmu.cs.lti.gigascript.lexical.SemanticType;
+import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
 
