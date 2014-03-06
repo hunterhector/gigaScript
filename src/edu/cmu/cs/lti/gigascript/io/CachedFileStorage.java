@@ -35,34 +35,34 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     @Override
     public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
-        return cacheTuple(arg0,arg1,relation);
+        return cacheTuple(arg0, arg1, relation);
     }
 
     @Override
     public void addGigaBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality) {
-       cacheBigram(t1,t2, sentDistance,tupleDistance, equality);
+        cacheBigram(t1, t2, sentDistance, tupleDistance, equality);
     }
 
     private void writeTuple(Writer writer) throws IOException {
         TObjectIntIterator<Triple<String, String, String>> iter = tupleIds.iterator();
 
-        while (iter.hasNext()){
+        while (iter.hasNext()) {
             iter.advance();
             writer.write(iter.key().toString());//the key is the tuple, a primary key
             int tupleId = iter.value();
-            writer.write("\t"+ tupleId+"_"+outputFileId);
+            writer.write("\t" + tupleId + "_" + outputFileId);
             writer.write("\t" + tupleCount.get(tupleId));
-            writer.write("\t"+ tupleEntityTypes.get(tupleId));
+            writer.write("\t" + tupleEntityTypes.get(tupleId));
             writer.write("\n");
         }
     }
 
-    private void writeBigram(Writer writer) throws IOException{
-        for (Cell<Long,Long,BigramInfo> cell  : bigramInfoTable.cellSet()){
-            writer.write(cell.getRowKey()+","+cell.getColumnKey()+"_"+outputFileId+"\t"); //this pair is the primary key
+    private void writeBigram(Writer writer) throws IOException {
+        for (Cell<Long, Long, BigramInfo> cell : bigramInfoTable.cellSet()) {
+            writer.write(cell.getRowKey() + "," + cell.getColumnKey() + "_" + outputFileId + "\t"); //this pair is the primary key
             BigramInfo info = cell.getValue();
 
-            IOUtils.writeMap(writer,info.getSentenceDistanceCount(),":",",");
+            IOUtils.writeMap(writer, info.getSentenceDistanceCount(), ":", ",");
 
             writer.write("\t");
 
@@ -82,17 +82,54 @@ public class CachedFileStorage extends CacheBasedStorage {
         Writer tupleWriter = null;
         Writer cooccWriter = null;
 
+        File tupleOutputFile = new File(tupleOutputPrefix + outputTupleStoreName + outputFileId);
+        File cooccOutputFile = new File(bigramOutputPrefix + outputCooccStoreName + outputFileId);
+
+        //make sure directory exists
+        File tupleOutputDir = tupleOutputFile.getParentFile();
+        File cooccOutputDir = cooccOutputFile.getParentFile();
+
+        try {
+            if (!tupleOutputDir.exists()) {
+                if (!tupleOutputDir.mkdirs()) {
+                    System.err.println("Cannot create directory to store tuples on :" + tupleOutputDir.getCanonicalPath());
+                } else{
+                    System.out.println("Created directory to write tuples");
+                }
+            }
+
+            if (!cooccOutputDir.exists()) {
+                if (!cooccOutputDir.mkdirs()) {
+                    System.err.println("Cannot create directory to store bigrams on :" + cooccOutputDir.getCanonicalPath());
+                } else{
+                    System.out.println("Created directory to write bigrams");
+                }
+            }
+
+            if (tupleOutputDir.exists() && tupleOutputDir.isFile()) {
+                System.err.println("Target direcotry is a file :" + tupleOutputDir.getCanonicalPath());
+            }
+
+            if (cooccOutputDir.exists() && cooccOutputDir.isFile()) {
+                System.err.println("Target direcotry is a file :" + cooccOutputDir.getCanonicalPath());
+            }
+        } catch (IOException ex) {
+            System.err.println("Create directory file failure, I recommend you check it! See the log for more detail: " + logPath);
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
+        }
+
+
         try {
             tupleWriter = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(tupleOutputPrefix + outputTupleStoreName + outputFileId)));
-            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(bigramOutputPrefix + outputCooccStoreName + outputFileId)));
+                    new FileOutputStream(tupleOutputFile)));
+            cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cooccOutputFile)));
 
             writeTuple(tupleWriter);
             writeBigram(cooccWriter);
         } catch (IOException ex) {
-            System.err.println("Write file failure, I recommend you check it! See the log for more detail: "+logPath);
-            logger.log(Level.SEVERE,ex.getMessage(),ex);
-        }finally{
+            System.err.println("Write file failure, I recommend you check it! See the log for more detail: " + logPath);
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
+        } finally {
             try {
                 if (tupleWriter != null) {
                     tupleWriter.close();
@@ -101,7 +138,7 @@ public class CachedFileStorage extends CacheBasedStorage {
                     cooccWriter.close();
                 }
             } catch (IOException e) {
-                System.err.println("Close writer failure, I recommend you check it! See the log for more detail: "+logPath);
+                System.err.println("Close writer failure, I recommend you check it! See the log for more detail: " + logPath);
                 e.printStackTrace();
             }
         }

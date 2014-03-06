@@ -75,7 +75,7 @@ public class FullSystemRunner {
 
         if (!folder.exists()) {
             logger.log(Level.SEVERE, "Input directory not found: " + corpusPath);
-            throw new ConfigurationException();
+            throw new ConfigurationException("Cannot find input directory");
         }
 
         File[] listOfFiles = folder.listFiles();
