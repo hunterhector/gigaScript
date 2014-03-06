@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.gigascript.io;
 
+import com.google.common.io.Files;
 import de.mpii.clausie.NoParseClausIE;
 import de.mpii.clausie.Proposition;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
@@ -38,8 +39,11 @@ public class AgigaReader {
 
         NoParseClausIE npClauseIe = new NoParseClausIE(out, "clausie.properties");
 
-
         for (File currentFile: listOfFiles) {
+            String extension = Files.getFileExtension(currentFile.getName());
+            if (!extension.equals("gz")){
+                continue;
+            }
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), prefs);
             for (AgigaDocument doc : reader) {
                 for (AgigaSentence sent : doc.getSents()) {

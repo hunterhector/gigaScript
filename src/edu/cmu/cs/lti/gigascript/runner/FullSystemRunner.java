@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.gigascript.runner;
 
+import com.google.common.io.Files;
 import de.mpii.clausie.NoParseClausIE;
 import de.mpii.clausie.Proposition;
 import edu.cmu.cs.lti.gigascript.agiga.AgigaDocumentWrapper;
@@ -93,6 +94,11 @@ public class FullSystemRunner {
         long batchStartTime = startTime;
 
         for (File currentFile : listOfFiles) {
+            String extension = Files.getFileExtension(currentFile.getName());
+            if (!extension.equals("gz")){
+                continue;
+            }
+
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
             System.out.println("Processing achrive: " + currentFile.getName());
 
