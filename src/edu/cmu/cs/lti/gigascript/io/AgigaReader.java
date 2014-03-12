@@ -2,6 +2,10 @@ package edu.cmu.cs.lti.gigascript.io;
 
 import com.google.common.io.Files;
 import de.mpii.clausie.NoParseClausIE;
+import de.mpii.clausie.Proposition;
+import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
+import edu.cmu.cs.lti.gigascript.agiga.AgigaUtil;
+import edu.cmu.cs.lti.gigascript.util.IOUtils;
 import edu.jhu.agiga.AgigaDocument;
 import edu.jhu.agiga.AgigaPrefs;
 import edu.jhu.agiga.AgigaSentence;
@@ -11,6 +15,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -50,28 +55,34 @@ public class AgigaReader {
 
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), prefs);
             for (AgigaDocument doc : reader) {
-//                for (AgigaSentence sent : doc.getSents()) {
-//                    IOUtils.printSentence(sent, out);
-//                    try {
-//
-//                        AgigaSentenceWrapper wrapper = new AgigaSentenceWrapper(sent);
-//
-//                    npClauseIe.readParse(sent);
-//                    npClauseIe.detectClauses();
-//                    npClauseIe.generatePropositions();
-//
-//                    AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
-//
-//                    for (Proposition p : npClauseIe.getPropositions()) {
-//                        List<List<Integer>> constituentIndices = p.indices();
-//                    }
-//                    }catch (NullPointerException e) {
-//                         String.format("Giving up on Null Pointer.\n%s", AgigaUtil.getSentenceString(sent));
-////                        e.printStackTrace();
-//                    } catch (StackOverflowError e) {
-//                        String.format("Giving up on StackoverFlow.\n%s", AgigaUtil.getSentenceString(sent));
-//                    }
-//                }
+                for (AgigaSentence sent : doc.getSents()) {
+                    IOUtils.printSentence(sent, out);
+                    try {
+
+                        AgigaSentenceWrapper wrapper = new AgigaSentenceWrapper(sent);
+
+                        npClauseIe.readParse(sent);
+                        npClauseIe.detectClauses();
+                        npClauseIe.generatePropositions();
+
+                        for (Proposition p : npClauseIe.getPropositions()) {
+                            System.out.println(p);
+                            List<List<Integer>> constituentIndices = p.indices();
+
+                            System.out.println(AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1)));
+                        }
+                         AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
+
+                        for (Proposition p : npClauseIe.getPropositions()) {
+                            List<List<Integer>> constituentIndices = p.indices();
+                        }
+                    } catch (NullPointerException e) {
+                        String.format("Giving up on Null Pointer.\n%s", AgigaUtil.getSentenceString(sent));
+//                        e.printStackTrace();
+                    } catch (StackOverflowError e) {
+                        String.format("Giving up on StackoverFlow.\n%s", AgigaUtil.getSentenceString(sent));
+                    }
+                }
                 if (doc.getSents().size() > 100) {
                     System.out.println(reader.getNumDocs() + " " + doc.getSents().size());
                 }
