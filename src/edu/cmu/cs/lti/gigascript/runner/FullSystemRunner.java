@@ -157,10 +157,9 @@ public class FullSystemRunner {
                 //store the referencing ids that this argument holds in the database, it could be a list of id because each alternative form will take up one
                 Map<Pair<AgigaArgument, AgigaArgument>, List<Long>> tuple2StorageIdMapping = new HashMap<Pair<AgigaArgument, AgigaArgument>, List<Long>>();
 
-
                 ArrayList<Triple<AgigaArgument, AgigaArgument, String>> allTupleList = new ArrayList<Triple<AgigaArgument, AgigaArgument, String>>(allTuples);
 
-                for (int t1 = 0; t1 < allTupleList.size() - 1; t1++) {
+                for (int t1 = 0; t1 < allTupleList.size()-1; t1++) {
                     for (int t2 = t1 + 1; t2 < allTupleList.size(); t2++) {
                         Triple<AgigaArgument, AgigaArgument, String> tuple1 = allTupleList.get(t1);
                         Triple<AgigaArgument, AgigaArgument, String> tuple2 = allTupleList.get(t2);

@@ -78,6 +78,10 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     @Override
     public void flush() {
+        /**
+         * Note: currently there seems to have a bug that miss some tuples, be careful
+         */
+
 //        System.out.println("\nBegin flushing");
         Writer tupleWriter = null;
         Writer cooccWriter = null;

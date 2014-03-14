@@ -22,7 +22,6 @@ import java.util.List;
 public abstract class CacheBasedStorage extends GigaStorage {
     //All these collections need to be clean periodically!
 
-    //Store the tuple id using 1 indexing
     TObjectIntHashMap<Triple<String, String, String>> tupleIds = new TObjectIntHashMap<Triple<String, String, String>>();
     List<Pair<String, String>> tupleEntityTypes = new ArrayList<Pair<String, String>>();
     TIntArrayList tupleCount = new TIntArrayList();
@@ -72,7 +71,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
     }
 
     protected void cacheBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality) {
-        //store the natural order
+        //store the natural order only
         if (bigramInfoTable.contains(t1, t2)) {
             bigramInfoTable.get(t1, t2).observe(sentDistance, tupleDistance, equality);
         } else {
@@ -80,7 +79,6 @@ public abstract class CacheBasedStorage extends GigaStorage {
             bigramInfoTable.put(t1, t2, bigramInfo);
         }
     }
-
 
     /**
      * Method for clean up and flush to disk
