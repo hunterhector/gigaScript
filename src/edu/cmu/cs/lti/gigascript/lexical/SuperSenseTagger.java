@@ -57,12 +57,10 @@ public class SuperSenseTagger {
 
                 if (arg1Type.equals("-") || arg1Type.equals("MISC")) {
                     arg1Type = getWordNetSense(arg1, dict);
-                    System.out.println(arg1Type);
                 }
 
                 if (arg2Type.equals("-") || arg2Type.equals("MISC")) {
                     arg2Type = getWordNetSense(arg2, dict);
-                    System.out.println(arg2Type);
                 }
 
                 bw.write(String.format("%s\t%s\t%s\t%s\t%s\n", parts[0], parts[1], parts[2], arg1Type, arg2Type));
