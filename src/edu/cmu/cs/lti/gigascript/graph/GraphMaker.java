@@ -10,10 +10,14 @@ import java.io.*;
  */
 public class GraphMaker {
 
+    private static void makeBigramCountGraph(){
+
+    }
+
     public static void main(String[] args) throws IOException {
-        File tupleFile = new File(args[0]);
+        File bigramFile = new File(args[0]);
         System.out.println("Reading the bigram counts");
-        FileReader file = new FileReader(tupleFile);
+        FileReader file = new FileReader(bigramFile);
         BufferedReader br = new BufferedReader(file);
 
         String line;
