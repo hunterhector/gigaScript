@@ -16,9 +16,9 @@ out = open('reduced_tuples','w')
 
 def flush():
 	#write out previous 
-	arg1Type = ''  if not arg1TypeMap else max(arg1TypeMap.iteritems(), key=operator.itemgetter(1))[0]
-	arg2Type = ''  if not arg2TypeMap else max(arg2TypeMap.iteritems(), key=operator.itemgetter(1))[0]
-	out.write("%s\t%d\t%d\t(%s,%s)\n"%(previousTuple,tupleIdx,tupleCount,arg1Type,arg2Type))	
+	arg1Type = '-'  if not arg1TypeMap else max(arg1TypeMap.iteritems(), key=operator.itemgetter(1))[0]
+	arg2Type = '-'  if not arg2TypeMap else max(arg2TypeMap.iteritems(), key=operator.itemgetter(1))[0]
+	out.write("%s\t%d\t%d\t%s\t%s\n"%(previousTuple,tupleIdx,tupleCount,arg1Type,arg2Type))	
 
 base = 'sorted_tuples'
 
@@ -33,7 +33,7 @@ for filename in sorted(os.listdir(base)):
 		newTuple = parts[0].lower()
 		count = int(parts[2])
 		typeTuple = parts[3]
-		types = typeTuple[1:len(typeTuple)-1].split(",")
+		types = typeTuple.rstrip(')').strip('(').split(",")
 
 		if isFirstLine or newTuple == previousTuple:
 			if isFirstLine:
@@ -50,19 +50,20 @@ for filename in sorted(os.listdir(base)):
 		
 		#extend tuple information
 		tupleCount +=count 
+		
+		if len(types) == 2:
+			#extend type information 
+			if not types[0] == 'null':
+				try:
+					arg1TypeMap[types[0]] += count
+				except KeyError:
+					arg1TypeMap[types[0]] = count
 
-		#extend type information 
-		if not types[0] == 'null':
-			try:
-				arg1TypeMap[types[0]] += count
-			except KeyError:
-				arg1TypeMap[types[0]] = count
-
-		if not types[1] == 'null':
-			try:
-				arg2TypeMap[types[1]] += count
-			except KeyError:
-				arg2TypeMap[types[1]] = count
+			if not types[1] == 'null':
+				try:
+					arg2TypeMap[types[1]] += count
+				except KeyError:
+					arg2TypeMap[types[1]] = count
 
 
 flush()

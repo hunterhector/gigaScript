@@ -1,5 +1,8 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
+import gnu.trove.map.hash.TByteByteHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+
 import java.io.*;
 
 /**
@@ -10,7 +13,9 @@ import java.io.*;
  */
 public class HostMap {
 
-   public void loadIdMap(File tupleFile) throws IOException {
+   public static TObjectIntHashMap<String> loadIdMap(File tupleFile) throws IOException {
+       TObjectIntHashMap<String> idMap = new TObjectIntHashMap<String>();
+
        System.out.println("Reading the tuple mapping");
        FileReader file = new FileReader(tupleFile);
        BufferedReader br = new BufferedReader(file);
@@ -18,14 +23,59 @@ public class HostMap {
        String line;
        while ((line = br.readLine()) != null) {
            String[] fields = line.split("\t");
+           if (fields.length != 5){
+               System.out.print(line);
+           }
+           idMap.put(fields[0], Integer.parseInt(fields[1]));
        }
+
+       return idMap;
    }
 
-   public void loadCountsMap(File tupleFile) throws IOException{
+   public static TObjectIntHashMap<String> loadCountsMap(File tupleFile) throws IOException{
+       TObjectIntHashMap<String> countMap = new TObjectIntHashMap<String>();
+       System.out.println("Reading the count mapping");
+       FileReader file = new FileReader(tupleFile);
+       BufferedReader br = new BufferedReader(file);
 
+       String line;
+       while ((line = br.readLine()) != null) {
+           String[] fields = line.split("\t");
+           if (fields.length != 5){
+               System.out.print(line);
+           }
+           countMap.put(fields[0], Integer.parseInt(fields[2]));
+       }
+
+       return countMap;
    }
 
-    public void loadTypeMap(File tupleFile){
+    public static void loadTypeMap(File tupleFile) throws IOException {
+        TByteByteHashMap typeMap = new TByteByteHashMap();
+        System.out.println("Reading the type mapping");
+        FileReader file = new FileReader(tupleFile);
+        BufferedReader br = new BufferedReader(file);
 
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] fields = line.split("\t");
+            if (fields.length != 5){
+                System.out.print(line);
+            }
+        }
+
+    }
+
+    public static void main(String[] args) throws IOException {
+        Runtime runtime = Runtime.getRuntime();
+        long memory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Used memory before: " + memory/1024L * 1024L);
+
+        TObjectIntHashMap<String> idMap = loadIdMap(new File("/Users/zhengzhongliu/Downloads/alltuples/reduced_tuples"));
+
+        System.out.println(idMap.size());
+
+        memory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Used memory after: " + memory/1024L * 1024L);
     }
 }
