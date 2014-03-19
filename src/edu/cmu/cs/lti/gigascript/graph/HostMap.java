@@ -68,14 +68,19 @@ public class HostMap {
 
     public static void main(String[] args) throws IOException {
         Runtime runtime = Runtime.getRuntime();
-        long memory = runtime.totalMemory() - runtime.freeMemory();
-        System.out.println("Used memory before: " + memory/1024L * 1024L);
 
-        TObjectIntHashMap<String> idMap = loadIdMap(new File("/Users/zhengzhongliu/Downloads/alltuples/reduced_tuples"));
+        long usableFreeMemory= runtime.maxMemory()
+                -Runtime.getRuntime().totalMemory()
+                +Runtime.getRuntime().freeMemory();
+        System.out.println("Free memory before (MB): " + usableFreeMemory/(1024 * 1024 *1.0));
+
+        TObjectIntHashMap<String> idMap = loadIdMap(new File("scripts/tuplesOther"));
 
         System.out.println(idMap.size());
 
-        memory = runtime.totalMemory() - runtime.freeMemory();
-        System.out.println("Used memory after: " + memory/1024L * 1024L);
+        usableFreeMemory = runtime.maxMemory()
+                -Runtime.getRuntime().totalMemory()
+                +Runtime.getRuntime().freeMemory();
+        System.out.println("Free memory after (MB): " + usableFreeMemory/(1024 * 1024 *1.0));
     }
 }
