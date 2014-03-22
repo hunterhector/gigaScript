@@ -4,6 +4,7 @@ import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.AgigaToken;
 import edu.jhu.agiga.AgigaTypedDependency;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,5 +54,23 @@ public class AgigaSentenceWrapper {
         }
 
         return firstIndex;
+    }
+
+    public String getSentenceStr() {
+        String str = "";
+        for (AgigaToken token : tokens) {
+            str += token.getWord();
+            str += " ";
+        }
+        return str;
+    }
+
+    public String getSentenceLemmaStr(){
+        String str = "";
+        for (AgigaToken token : tokens) {
+            str += token.getLemma();
+            str += " ";
+        }
+        return str;
     }
 }

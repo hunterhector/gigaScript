@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.gigascript.io;
+package edu.cmu.cs.lti.gigascript.demo;
 
 import com.google.common.io.Files;
 import de.mpii.clausie.NoParseClausIE;
