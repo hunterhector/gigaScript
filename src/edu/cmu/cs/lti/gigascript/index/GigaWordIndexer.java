@@ -85,7 +85,7 @@ public class GigaWordIndexer {
                 int sentIdx = 0;
                 for (AgigaSentence sent : doc.getSents()) {
                     SolrInputDocument solrDoc = new SolrInputDocument();
-                    solrDoc.addField("id", doc.getDocId() + "_" + sentIdx, 1.0f);
+                    solrDoc.addField("id", doc.getDocId() + "_" + sentIdx);
 
                     AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
 
@@ -103,16 +103,14 @@ public class GigaWordIndexer {
                     System.out.print("\r" + reader.getNumDocs());
                 } else {
                     //this will be more readable if we would like to direct the console output to file
-                    System.out.print(reader.getNumDocs() + " ");
+                    if(reader.getNumDocs() % 500 == 0) {
+                        System.out.print(reader.getNumDocs() + " ");
+                    }
                 }
 
                 if (reader.getNumDocs() % docNum2Flush == 0) {
                     server.add(docs);
-                    server.commit();
-                    UpdateRequest req = new UpdateRequest();
-                    req.setAction(UpdateRequest.ACTION.COMMIT, false, false);
-                    req.add(docs);
-                    UpdateResponse rsp = req.process(server);
+                    docs = new ArrayList<SolrInputDocument>();
                 }
             }
 
