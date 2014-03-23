@@ -51,7 +51,10 @@ public class GigaWordIndexer {
         AgigaPrefs prefs = new AgigaPrefs();
         prefs.setAll(true);
 
-        server.deleteByQuery("*:*");// CAUTION: deletes everything!
+        if (config.getBoolean("edu.cmu.cs.lti.gigaScript.index.reset")) {
+            System.out.println("Cleaning the index!");
+            server.deleteByQuery("*:*");// CAUTION: deletes everything!
+        }
 
         System.out.println("Parsing XML...");
 
