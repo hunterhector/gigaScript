@@ -33,10 +33,12 @@ public class GigaWordSearcher {
 
         SolrQuery query = new SolrQuery();
         query.setQuery("los angles");
-        query.setFields("text");
+        query.setFields("id","content","title");
         query.setStart(0);
 
         QueryResponse response = server.query(query);
+
+        System.out.println(response);
 
         SolrDocumentList results = response.getResults();
         for (int i = 0; i < results.size(); i++){

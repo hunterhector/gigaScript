@@ -15,9 +15,7 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -40,25 +38,28 @@ public class GigaWordIndexer {
 
         Configuration config = new Configuration(new File(propPath));
 
-        String host =config.get("edu.cmu.cs.lti.gigaScript.solor.host");
+        String host = config.get("edu.cmu.cs.lti.gigaScript.solor.host");
 
-        System.out.println("Connecting to "+host);
+        boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
+
+        int docNum2Flush = config.getInt("edu.cmu.cs.lti.gigaScript.flush.size");
+
+        System.out.println("Connecting to " + host);
 
         SolrServer server = new HttpSolrServer(host);
 
         AgigaPrefs prefs = new AgigaPrefs();
         prefs.setAll(true);
 
-        server.deleteByQuery( "*:*" );// CAUTION: deletes everything!
+        server.deleteByQuery("*:*");// CAUTION: deletes everything!
 
         System.out.println("Parsing XML...");
 
         System.out.println("Number of documents processed:");
 
-        FileOutputStream sentenceOut = new FileOutputStream(new File("sentences.txt"));
-        PrintStream out = new PrintStream(sentenceOut);
+        String corpusPath = config.get("edu.cmu.cs.lti.gigaScript.agiga.dir");
 
-        File folder = new File(System.getProperty("user.home") + "/Downloads/agiga_sample_1");
+        File folder = new File(corpusPath);
 
         File[] listOfFiles = folder.listFiles();
 
@@ -82,33 +83,41 @@ public class GigaWordIndexer {
 
             for (AgigaDocument doc : reader) {
                 int sentIdx = 0;
-                for (AgigaSentence sent : doc.getSents()){
+                for (AgigaSentence sent : doc.getSents()) {
                     SolrInputDocument solrDoc = new SolrInputDocument();
-                    solrDoc.addField("id",doc.getDocId()+"_"+sentIdx,1.0f);
+                    solrDoc.addField("id", doc.getDocId() + "_" + sentIdx, 1.0f);
 
                     AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
-                                sentenceWrapper.getSentenceLemmaStr();
 
-                    String sentStr = sentenceWrapper.getSentenceStr();
-                    System.out.println(doc.getDocId()+"_"+sentIdx);
-                    System.out.println(sentStr);
+                    String sentStr = sentenceWrapper.getSentenceLemmaStr();
+//                    System.out.println(doc.getDocId()+"_"+sentIdx);
+//                    System.out.println(sentStr);
 
-                    solrDoc.addField("text",sentStr);
+                    solrDoc.addField("content", sentStr);
+                    solrDoc.addField("title",doc.getDocId());
                     docs.add(solrDoc);
                     sentIdx += 1;
                 }
-                System.out.print("\r" + reader.getNumDocs());
+                if (consoleMode) {
+                    //nice progress view when we can view it in the console
+                    System.out.print("\r" + reader.getNumDocs());
+                } else {
+                    //this will be more readable if we would like to direct the console output to file
+                    System.out.print(reader.getNumDocs() + " ");
+                }
+
+                if (reader.getNumDocs() % docNum2Flush == 0) {
+                    server.add(docs);
+                    server.commit();
+                    UpdateRequest req = new UpdateRequest();
+                    req.setAction(UpdateRequest.ACTION.COMMIT, false, false);
+                    req.add(docs);
+                    UpdateResponse rsp = req.process(server);
+                }
             }
 
-            server.add(docs);
-            server.commit();
-            UpdateRequest req = new UpdateRequest();
-            req.setAction( UpdateRequest.ACTION.COMMIT, false, false );
-            req.add( docs );
-            UpdateResponse rsp = req.process( server );
-
             System.out.println();
-            System.out.println("Batch processing time "+ (System.currentTimeMillis()-batchStartTime)/6e4 + " minutes");
+            System.out.println("Batch processing time " + (System.currentTimeMillis() - batchStartTime) / 6e4 + " minutes");
         }
 
         System.out.println();

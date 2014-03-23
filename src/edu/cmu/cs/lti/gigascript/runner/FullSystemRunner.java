@@ -54,7 +54,7 @@ public class FullSystemRunner {
         fh.setFormatter(formatter);
 
         //Set mode
-        boolean singleProcssMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("single");
+        boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
 
         //Prepare storage
         String storageMethod = config.get("edu.cmu.cs.lti.gigaScript.tupleStorage");
@@ -199,7 +199,7 @@ public class FullSystemRunner {
                 if (reader.getNumDocs() % docNum2Flush == 0) {
                     gigaStorage.flush();
                 }
-                if (singleProcssMode) {
+                if (consoleMode) {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
                 } else {
