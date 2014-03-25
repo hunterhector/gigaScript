@@ -23,7 +23,7 @@ public class Configuration {
     public Configuration(File configurationFile) throws IOException {
         configFile = configurationFile;
         if (!configFile.exists()){
-            throw new IOException("Cannot read config file");
+            throw new IOException("Cannot read config file at : "+configFile.getCanonicalPath());
         }
         properties = new Properties();
         properties.load(new FileInputStream(configurationFile));

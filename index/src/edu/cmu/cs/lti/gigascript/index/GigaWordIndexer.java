@@ -36,7 +36,7 @@ public class GigaWordIndexer {
 
         Configuration config = new Configuration(new File(propPath));
 
-        String host = config.get("edu.cmu.cs.lti.gigaScript.solor.host");
+        String host = config.get("edu.cmu.cs.lti.gigaScript.solr.host");
 
         boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
 

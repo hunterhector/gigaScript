@@ -21,7 +21,7 @@ import java.util.Collection;
  */
 public class GigaWordSearcher {
     public static void main(String[] argv) throws IOException, SolrServerException {
-        String propPath = "settings.properties";
+        String propPath = "../settings.properties";
         if (argv.length < 1) {
             System.err.println("Missing property file argument! Will try default property.");
         } else {
@@ -29,7 +29,7 @@ public class GigaWordSearcher {
         }
 
         Configuration config = new Configuration(new File(propPath));
-        SolrServer server = new HttpSolrServer(config.get("edu.cmu.cs.lti.gigaScript.solor.host"));
+        SolrServer server = new HttpSolrServer(config.get("edu.cmu.cs.lti.gigaScript.solr.host"));
 
         SolrQuery query = new SolrQuery();
         query.setQuery("los angles");
