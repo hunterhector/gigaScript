@@ -23,7 +23,7 @@ import java.util.List;
  * Date: 2/11/14
  * Time: 2:25 PM
  */
-public class AgigaReader {
+public class AgigaClausieDemo {
     public static void main(String[] argv) throws IOException {
         long startTime = System.currentTimeMillis();
         long batchStartTime = startTime;
