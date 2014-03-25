@@ -10,8 +10,6 @@ import edu.jhu.agiga.StreamingDocumentReader;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.request.UpdateRequest;
-import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 import java.io.File;
@@ -106,7 +104,7 @@ public class GigaWordIndexer {
                     System.out.print("\r" + reader.getNumDocs());
                 } else {
                     //this will be more readable if we would like to direct the console output to file
-                    if(reader.getNumDocs() % 500 == 0) {
+                    if(reader.getNumDocs() % docNum2Flush == 0) {
                         System.out.print(reader.getNumDocs() + " ");
                     }
                 }

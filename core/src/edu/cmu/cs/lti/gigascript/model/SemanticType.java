@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.gigascript.lexical;
+package edu.cmu.cs.lti.gigascript.model;
 
 /**
  * Created with IntelliJ IDEA.

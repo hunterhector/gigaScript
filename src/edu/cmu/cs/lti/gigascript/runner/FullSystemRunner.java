@@ -53,7 +53,7 @@ public class FullSystemRunner {
         SimpleFormatter formatter = new SimpleFormatter();
         fh.setFormatter(formatter);
 
-        //Set mode
+        //Set model
         boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
 
         //Prepare storage
@@ -132,7 +132,7 @@ public class FullSystemRunner {
 //                            System.out.println(constituentIndices.get(1));
 //                            System.out.println(constituentIndices.get(2));
 
-                            //assume in triple mode
+                            //assume in triple model
                             AgigaArgument arg0s = createArgument(constituentIndices.get(0), docWrapper, sentenceWrapper, sent);
                             AgigaArgument arg1s = createArgument(constituentIndices.get(2), docWrapper, sentenceWrapper, sent);
 

@@ -26,7 +26,7 @@ public class GoogleSearcher {
     static final String address = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=";
 
     public static List<String> search(String query) throws IOException {
-        URL url = new URL(address + URLEncoder.encode(query));
+        URL url = new URL(address + URLEncoder.encode(query,"UTF-8"));
 
         Reader reader = new InputStreamReader(url.openStream());
 

@@ -53,7 +53,7 @@ public class GigaDB extends CacheBasedStorage{
 
             conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             conn = turnonWalMode(conn);
-            logger.log(Level.INFO, "Opened database successfully (with WAL mode)");
+            logger.log(Level.INFO, "Opened database successfully (with WAL model)");
 
             createTables();
         } catch (SQLException e) {
