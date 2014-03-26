@@ -228,8 +228,10 @@ public class FullSystemRunner {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
                 } else {
-                    //this will be more readable if we would like to direct the console output to file
-                    System.out.print(reader.getNumDocs()+" ");
+                    if (reader.getNumDocs() % 500 == 0) {
+                        //this will be more readable if we would like to direct the console output to file
+                        System.out.print(reader.getNumDocs() + " ");
+                    }
                 }
             }
 
