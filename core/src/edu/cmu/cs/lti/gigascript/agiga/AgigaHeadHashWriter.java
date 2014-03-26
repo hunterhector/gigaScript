@@ -18,7 +18,7 @@ import java.security.NoSuchAlgorithmException;
  * Date: 3/25/14
  * Time: 3:59 PM
  */
-public class AgigaHeadWriter {
+public class AgigaHeadHashWriter {
     public static void main(String[] argv) throws IOException, NoSuchAlgorithmException {
 
         String propPath = "settings.properties";
@@ -35,7 +35,7 @@ public class AgigaHeadWriter {
 
         boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
 
-        String outputPath = config.get("edu.cmu.cs.lti.gigaScript.sentences.out.path");
+        String outputPath = config.get("edu.cmu.cs.lti.gigaScript.plain.out.path");
 
         File outputDir = new File(outputPath);
 

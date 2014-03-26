@@ -13,8 +13,10 @@ import edu.cmu.cs.lti.gigascript.io.GigaStorage;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.jhu.agiga.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.vfs2.FileUtil;
 
 import javax.naming.ConfigurationException;
 import java.io.File;
@@ -53,8 +55,25 @@ public class FullSystemRunner {
         SimpleFormatter formatter = new SimpleFormatter();
         fh.setFormatter(formatter);
 
-        //Set model
+        //Set mode
         boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
+
+        //Subset only?
+        boolean doFilter = config.getBoolean("edu.cmu.cs.lti.gigaScript.filter");
+
+        Set<String> filesToFilter = new HashSet<String>();
+
+        if (doFilter) {
+            File filterFile = new File(config.get("edu.cmu.cs.lti.gigaScript.filterFile"));
+            for (String line : FileUtils.readLines(filterFile,"ascii")){
+                String[] parts = line.trim().split("\t");
+                if (parts.length == 2){
+                    filesToFilter.add(parts[1]);
+                }
+            }
+            logger.log(Level.INFO,"Will only produce result for the chosen "+filesToFilter.size()+" documents.");
+        }
+
 
         //Prepare storage
         String storageMethod = config.get("edu.cmu.cs.lti.gigaScript.tupleStorage");
@@ -103,6 +122,12 @@ public class FullSystemRunner {
             System.out.println("Processing achrive: " + currentFile.getName());
 
             for (AgigaDocument doc : reader) {
+                if (doFilter){
+                    if (!filesToFilter.contains(doc.getDocId())){
+                        continue;
+                    }
+                }
+
                 AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
 
                 //A linked set could retain the sequence and filter identical triples
