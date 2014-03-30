@@ -27,6 +27,8 @@ public abstract class CacheBasedStorage extends GigaStorage {
     TIntArrayList tupleCount = new TIntArrayList();
     Table<Long, Long, BigramInfo> bigramInfoTable = HashBasedTable.create();
 
+    String additionalStr = "";
+
     boolean hasNoTuples = true;
 
     int outputFileId = 0;
@@ -90,5 +92,10 @@ public abstract class CacheBasedStorage extends GigaStorage {
         tupleEntityTypes.clear();
         bigramInfoTable.clear();
         hasNoTuples = true;
+    }
+
+    public void flush(String additionalStr){
+        this.additionalStr = additionalStr;
+        flush();
     }
 }

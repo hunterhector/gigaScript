@@ -25,12 +25,14 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     String tupleOutputPrefix;
     String bigramOutputPrefix;
+    boolean writeAddintionalInfo;
 
     public CachedFileStorage(Configuration config) {
         super(config);
         tupleOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.tuple.prefix");
         bigramOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.bigram.prefix");
         logPath = config.get("edu.cmu.cs.lti.gigaScript.log");
+        writeAddintionalInfo = config.getBoolean("edu.cmu.cs.lti.gigaScript.additionalInfo");
     }
 
     @Override
@@ -53,6 +55,10 @@ public class CachedFileStorage extends CacheBasedStorage {
             writer.write("\t" + tupleId + "_" + outputFileId);
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t" + tupleEntityTypes.get(tupleId));
+            if (writeAddintionalInfo){
+                writer.write("\t");
+                writer.write(additionalStr);
+            }
             writer.write("\n");
         }
     }
@@ -71,6 +77,11 @@ public class CachedFileStorage extends CacheBasedStorage {
             writer.write("\t");
 
             IOUtils.writeList(writer, info.getTupleEqualityCount(), ",");
+
+            if (writeAddintionalInfo){
+                writer.write("\t");
+                writer.write(additionalStr);
+            }
 
             writer.write("\n");
         }

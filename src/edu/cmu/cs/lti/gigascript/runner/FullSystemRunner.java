@@ -121,7 +121,9 @@ public class FullSystemRunner {
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
             System.out.println("Processing achrive: " + currentFile.getName());
 
+            String docId ="";
             for (AgigaDocument doc : reader) {
+                docId = doc.getDocId();
                 if (doFilter){
                     if (!filesToFilter.contains(doc.getDocId())){
                         continue;
@@ -222,7 +224,7 @@ public class FullSystemRunner {
                     }
                 }
                 if (reader.getNumDocs() % docNum2Flush == 0) {
-                    gigaStorage.flush();
+                    gigaStorage.flush(docId);
                 }
                 if (consoleMode) {
                     //nice progress view when we can view it in the console
@@ -235,7 +237,7 @@ public class FullSystemRunner {
                 }
             }
 
-            gigaStorage.flush();
+            gigaStorage.flush(docId);
 
             System.out.println();
 
