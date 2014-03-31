@@ -17,6 +17,7 @@ public class SuperSenseTagger {
     public static void main(String[] args) throws IOException {
         String inputPath = args[0];
         String outputPath = args[1];
+        String wnPath = args[2];///Users/zhengzhongliu/tools/wnDict/
 
         File outFile = new File(outputPath);
 
@@ -32,8 +33,7 @@ public class SuperSenseTagger {
         FileReader file = new FileReader(inputPath);
         BufferedReader br = new BufferedReader(file);
 
-        String wordNetDirectory = "/Users/zhengzhongliu/tools/wnDict/";
-        URL url = new URL("file", null, wordNetDirectory);
+        URL url = new URL("file", null, wnPath);
 
         //construct the Dictionary object and open it
         IDictionary dict = new Dictionary(url);
@@ -81,7 +81,7 @@ public class SuperSenseTagger {
             IWord word = dict.getWord(wordID);
             ISynset synset = word.getSynset();
             String LexFileName = synset.getLexicalFile().getName();
-            return LexFileName.replace("noun.", "");
+            return LexFileName.replace("noun.", "_");
         } catch (Exception e) {
             return "-";
         }
