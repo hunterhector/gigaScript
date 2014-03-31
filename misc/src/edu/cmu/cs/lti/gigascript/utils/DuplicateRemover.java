@@ -1,14 +1,13 @@
 package edu.cmu.cs.lti.gigascript.utils;
 
-import com.sun.org.apache.bcel.internal.generic.DUP;
 import edu.cmu.cs.lti.gigascript.io.SplittedFileLinesIterator;
 import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,14 +16,10 @@ import java.util.Iterator;
  * Time: 8:06 PM
  */
 public class DuplicateRemover {
-    private boolean isBigram = true;
-    private TObjectIntHashMap<String> dupCounts = new TObjectIntHashMap<String>();
+    private boolean isBigram = false;
 
-    public DuplicateRemover(File duplicatedFileNames) throws IOException {
-        for (String line : FileUtils.readLines(duplicatedFileNames)){
-            String[] parts = line.split("\t");
-            dupCounts.put(parts[1],Integer.parseInt(parts[1]));
-        }
+    public DuplicateRemover(boolean isBigram) throws IOException {
+        this.isBigram = isBigram;
     }
 
     public void doRemove(Writer writer, Iterator<String> dupoutIter,Iterator<String> originIter) throws IOException {
@@ -32,48 +27,94 @@ public class DuplicateRemover {
             String dupStr = dupoutIter.next();
             String originStr = originIter.next();
 
-            if (checkSame(dupStr,originStr)){
-                writer.write(getRemovedResult(dupStr,originStr));
-            }else{
-                writer.write(originStr);
+            while(true) {
+                int compare = compareStr(dupStr, originStr);
+
+                System.out.println(dupStr);
+                System.out.println(originStr);
+                System.out.println(compare);
+
+                if (compare == 0) {
+                    System.out.println("Removing duplicates!");
+                    writer.write(getRemovedResult(dupStr, originStr));
+                    if (!(originIter.hasNext() && dupoutIter.hasNext())){
+                        break;
+                    }
+                    originStr= originIter.next();
+                    dupStr = dupoutIter.next();
+                } else if (compare > 0) {
+                    System.out.println("origin forward");
+                    //dup is larger, so origin is behind
+                    if (!originIter.hasNext()){
+                        break;
+                    }
+                    originStr= originIter.next();
+                    writer.write(originStr+"\n");
+                } else {
+                    System.out.println("dup forward");
+                    //dup is behind
+                    if (!dupoutIter.hasNext()){
+                        break;
+                    }
+                    dupStr = dupoutIter.next();
+                }
+                Scanner in = new Scanner( System.in );
+                in.nextLine();
             }
         }
+
+        while (originIter.hasNext()){
+            String originStr = originIter.next();
+            writer.write(originStr+"\n");
+        }
     }
 
-    private boolean checkSame(String line1, String line2) {
+    private int compareStr(String line1, String line2) {
         if (isBigram) {
-            return checkTupleSame(line1,line2);
+            return compareBigram(line1, line2);
         } else {
-            return checkBigramSame(line1,line2);
+            return compareTuple(line1, line2);
         }
     }
 
-    private boolean checkTupleSame(String line1, String line2) {
+    private int compareTuple(String line1, String line2) {
         String[] parts1 = line1.split("\t");
         String[] parts2 = line2.split("\t");
 
-        if (parts1.length == 0 || parts2.length == 0){
+//        System.out.println(parts1[0]+" "+parts2[0]+" "+parts1[0].compareTo(parts2[0]));
+
+        if (parts1.length == 0 ){
             System.out.println("=========");
             System.out.println(line1);
             System.out.println(line2);
-            return false;
+            return -1;
+        }else if (parts2.length == 0){
+            System.out.println("=========");
+            System.out.println(line1);
+            System.out.println(line2);
+            return 1;
         }
 
-        return parts1[0].equals(parts2[0]);
+        return parts1[0].compareTo(parts2[0]);
     }
 
-    private boolean checkBigramSame(String line1, String line2) {
+    private int compareBigram(String line1, String line2) {
         String[] parts1 = line1.split("\t");
         String[] parts2 = line2.split("\t");
 
-        if (parts1.length < 2 || parts2.length < 2){
+        if (parts1.length < 2 ){
             System.out.println("=========");
             System.out.println(line1);
             System.out.println(line2);
-            return false;
+            return -1;
+        }else if(parts2.length < 2){
+            System.out.println("=========");
+            System.out.println(line1);
+            System.out.println(line2);
+            return 1;
         }
 
-        return (parts1[0]+parts1[1]).equals(parts2[0]+parts2[1]);
+        return (parts1[0]+parts1[1]).compareTo(parts2[0]+parts2[1]);
     }
 
     private String getRemovedResult(String dup, String origin) {
@@ -97,7 +138,6 @@ public class DuplicateRemover {
     }
 
     private String getBigramResult(String dup, String origin) {
-
         String[] dupParts = dup.split("\t");
         String[] originParts = origin.split("\t");
 
@@ -115,7 +155,11 @@ public class DuplicateRemover {
 
     private void removeDupFromMap(TIntIntHashMap originMap, TIntIntHashMap dupMap ){
         for (int key : dupMap.keys()){
-            originMap.adjustValue(key,-dupMap.get(key));
+            if (originMap.containsKey(key)) {
+                if (originMap.get(key) > dupMap.get(key)) {
+                    originMap.adjustValue(key, -dupMap.get(key));
+                }
+            }
         }
     }
 
@@ -150,13 +194,19 @@ public class DuplicateRemover {
     }
 
     public static void main(String[] args) throws IOException {
-        String dupFilePath = "";
+        String dupFilePath = args[0];
         String dupFileBasename = "";
 
-        String originFilePath = "";
+        String originFilePath = args[1];
         String originFileBasename = "";
 
-        String outputFilePath = "";
+        boolean isBigram = false;
+
+        if (args.length == 3){
+            isBigram = true;
+        }
+
+        String outputFilePath = "dup_removed";
 
         File dupFile = new File(dupFilePath);
         File originalFile = new File(originFilePath);
@@ -178,8 +228,10 @@ public class DuplicateRemover {
             originIter = FileUtils.lineIterator(originalFile);
         }
 
-        DuplicateRemover remover  = new DuplicateRemover(new File("/home/hector/storage/dup/duplicate.count.head"));
+        DuplicateRemover remover  = new DuplicateRemover(isBigram);
         remover.doRemove(writer,dupoutIter,originIter);
+
+        writer.close();
     }
 
 }
