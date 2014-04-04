@@ -2,8 +2,8 @@ package edu.cmu.cs.lti.gigascript.agiga;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import edu.cmu.cs.lti.gigascript.model.SemanticType;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.SemanticType;
 import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -19,17 +19,20 @@ import java.util.Set;
  * Time: 11:16 PM
  */
 public class AgigaDocumentWrapper {
+    AgigaDocument document;
     Table<Integer, Integer, SemanticType> typeMapping;
     List<Set<Pair<Integer, Integer>>> corefChains;
+    String documentText;
 
     public AgigaDocumentWrapper(AgigaDocument document) {
+        this.document = document;
         typeMapping = HashBasedTable.create();
         corefChains = new ArrayList<Set<Pair<Integer, Integer>>>();
 
         List<AgigaCoref> corefs = document.getCorefs();
         SemanticType type = new SemanticType();
         for (AgigaCoref coref : corefs) {
-            Set<Pair<Integer,Integer>> corefChain = new HashSet<Pair<Integer, Integer>>();
+            Set<Pair<Integer, Integer>> corefChain = new HashSet<Pair<Integer, Integer>>();
             for (AgigaMention mention : coref.getMentions()) {
                 int sentIndex = mention.getSentenceIdx();
 
@@ -41,19 +44,31 @@ public class AgigaDocumentWrapper {
 //                    if (token.getNerTag() != null && !token.getNerTag().equals("O")) {
 //                        type.setType(token.getNerTag());
 //                    }
-                    corefChain.add(Pair.of(sentIndex,i));
+                    corefChain.add(Pair.of(sentIndex, i));
                 }
             }
             corefChains.add(corefChain);
         }
     }
 
-    public boolean sameArgument(AgigaArgument argument1, AgigaArgument argument2){
+    public String getText() {
+        if (documentText == null) {
+            documentText = "";
+            //build document text here
+            for (AgigaSentence sent : document.getSents()) {
+                AgigaSentenceWrapper sWrapper = new AgigaSentenceWrapper(sent);
+                documentText += sWrapper.getSentenceStr() + "\n";
+            }
+        }
+        return documentText;
+    }
+
+    public boolean sameArgument(AgigaArgument argument1, AgigaArgument argument2) {
         if (argument1.equals(argument2)) return true;
-        else{
-            for (Set<Pair<Integer, Integer>> corefChain : corefChains){
-               if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair()))
-                   return true;
+        else {
+            for (Set<Pair<Integer, Integer>> corefChain : corefChains) {
+                if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair()))
+                    return true;
             }
         }
         return false;
@@ -63,7 +78,7 @@ public class AgigaDocumentWrapper {
         int index = token.getTokIdx();
 
         // trust the token's own Named Entity Tag
-        if (!token.getNerTag().equals("O") && !token.getNerTag().equals("")){
+        if (!token.getNerTag().equals("O") && !token.getNerTag().equals("")) {
             return token.getNerTag();
         }
 
@@ -74,6 +89,7 @@ public class AgigaDocumentWrapper {
 
     /**
      * Return the semantic type and the index of the word that is used to get this type
+     *
      * @param sentence
      * @param indices
      * @return
@@ -81,7 +97,7 @@ public class AgigaDocumentWrapper {
     public String getArgumentSemanticType(AgigaSentence sentence, AgigaToken headword, List<Integer> indices) {
         if (headword == null) {
             return null;
-        }  else {
+        } else {
             String headWordType = getSemanticType(sentence, headword);
 
             //phrase type is too noisy
@@ -101,7 +117,6 @@ public class AgigaDocumentWrapper {
 //            }
         }
     }
-
 
 
 }

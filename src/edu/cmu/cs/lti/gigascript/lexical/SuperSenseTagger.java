@@ -14,10 +14,16 @@ import java.net.URL;
  * Time: 1:17 AM
  */
 public class SuperSenseTagger {
+    private static boolean upperFormmating = false;
     public static void main(String[] args) throws IOException {
         String inputPath = args[0];
         String outputPath = args[1];
         String wnPath = args[2];///Users/zhengzhongliu/tools/wnDict/
+
+        if (args.length > 3){
+            upperFormmating = true;
+            System.out.println("will use upper formatting");
+        }
 
         File outFile = new File(outputPath);
 
@@ -81,7 +87,10 @@ public class SuperSenseTagger {
             IWord word = dict.getWord(wordID);
             ISynset synset = word.getSynset();
             String LexFileName = synset.getLexicalFile().getName();
-            return LexFileName.replace("noun.", "_");
+            if (!upperFormmating)
+                return LexFileName.replace("noun.", "_");
+            else
+                return LexFileName.replace("noun.", "").toUpperCase();
         } catch (Exception e) {
             return "-";
         }

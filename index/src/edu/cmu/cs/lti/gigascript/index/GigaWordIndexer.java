@@ -1,11 +1,9 @@
 package edu.cmu.cs.lti.gigascript.index;
 
 import com.google.common.io.Files;
-import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.jhu.agiga.AgigaDocument;
 import edu.jhu.agiga.AgigaPrefs;
-import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.StreamingDocumentReader;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -16,25 +14,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
  * User: zhengzhongliu
- * Date: 3/22/14
- * Time: 4:57 PM
+ * Date: 4/3/14
+ * Time: 5:30 PM
  */
-public class GigaWordIndexer {
-    public static void main(String[] argv) throws IOException, SolrServerException {
-        String propPath = "settings.properties";
-        if (argv.length < 1) {
-            System.err.println("Missing property file argument! Will try default property.");
-        } else {
-            propPath = argv[0];
-        }
+public abstract class GigaWordIndexer {
 
+    Configuration config;
+
+    public GigaWordIndexer(Configuration config)  {
+        this.config = config;
+    }
+
+    public void index() throws IOException, SolrServerException {
         long startTime = System.currentTimeMillis();
-
-        Configuration config = new Configuration(new File(propPath));
 
         String host = config.get("edu.cmu.cs.lti.gigaScript.solr.host");
 
@@ -63,8 +61,6 @@ public class GigaWordIndexer {
         File folder = new File(corpusPath);
 
         File[] listOfFiles = folder.listFiles();
-
-
         for (File currentFile : listOfFiles) {
             long batchStartTime = System.currentTimeMillis();
 
@@ -83,22 +79,15 @@ public class GigaWordIndexer {
             Collection<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
 
             for (AgigaDocument doc : reader) {
-                int sentIdx = 0;
-                for (AgigaSentence sent : doc.getSents()) {
+
+                for (Map<String,String> fields : getIndexContent(doc)){
                     SolrInputDocument solrDoc = new SolrInputDocument();
-                    solrDoc.addField("id", doc.getDocId() + "_" + sentIdx);
-
-                    AgigaSentenceWrapper sentenceWrapper = new AgigaSentenceWrapper(sent);
-
-                    String sentStr = sentenceWrapper.getSentenceLemmaStr();
-//                    System.out.println(doc.getDocId()+"_"+sentIdx);
-//                    System.out.println(sentStr);
-
-                    solrDoc.addField("content", sentStr);
-                    solrDoc.addField("title",doc.getDocId());
+                    for (Map.Entry<String,String> field : fields.entrySet()){
+                        solrDoc.addField(field.getKey(),field.getValue());
+                    }
                     docs.add(solrDoc);
-                    sentIdx += 1;
                 }
+
                 if (consoleMode) {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
@@ -123,4 +112,7 @@ public class GigaWordIndexer {
         long totalTime = System.currentTimeMillis() - startTime;
         System.out.println("Overall processing time takes " + totalTime / 6e4 + " minutes");
     }
+
+    public abstract List<Map<String,String>> getIndexContent(AgigaDocument doc);
+
 }
