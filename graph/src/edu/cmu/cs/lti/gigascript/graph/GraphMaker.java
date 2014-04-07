@@ -20,7 +20,7 @@ public class GraphMaker {
         }
         Configuration config = new Configuration(new File(configPath));
 
-        String storePath = config.get("edu.cmu.cs.lti.gigaScript.graph.basedir");
+        String storePath = config.get("edu.cmu.cs.lti.gigaScript.graph.base.dir");
         String graphName = config.get("edu.cmu.cs.lti.gigaScript.graph.name");
 
         File edgeFile = new File(config.get("edu.cmu.cs.lti.gigaScript.graph.edges"));

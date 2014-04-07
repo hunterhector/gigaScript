@@ -91,6 +91,26 @@ public class GraphUtils {
         return aig;
     }
 
+    /**
+     * Build a weighted graph from triples list,
+     *
+     * @param triples
+     * @return an ArclabelledImmutableGraph representing the weighted graph
+     */
+    public static ArcLabelledImmutableGraph buildWeightedGraphFromTriples(List<Triple<Integer, Integer, Float>> triples, int offset) {
+
+        WeightedArc[] weightedArcArray = new WeightedArc[triples.size()];
+
+        for (int i = 0; i < triples.size(); i++) {
+            Triple<Integer, Integer, Float>  triple = triples.get(i);
+            weightedArcArray[i] = new WeightedArc(triple.getLeft()-offset, triple.getMiddle()-offset, triple.getRight());
+        }
+
+        ArcLabelledImmutableGraph aig = new WeightedBVGraph(weightedArcArray);
+
+        return aig;
+    }
+
     public static void storeWeightedGraph(ArcLabelledImmutableGraph g, String path, String basename) throws IOException {
         String fullPath = path+basename;
         System.err.println("Storing weighted graph to "+fullPath);

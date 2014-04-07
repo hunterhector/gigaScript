@@ -24,7 +24,7 @@ public class WeightedArc {
         final String p[] = line.split(" ");
         this.src = Integer.parseInt(p[0]) - offset;
         this.dest = Integer.parseInt(p[1]) - offset;
-        this.weight = Float.parseFloat(p[2]) - offset;
+        this.weight = Float.parseFloat(p[2]);
     }
 
     public String toString() {

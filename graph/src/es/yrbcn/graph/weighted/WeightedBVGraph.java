@@ -114,6 +114,8 @@ public class WeightedBVGraph extends ArcLabelledImmutableSequentialGraph {
                     return (int) (p.dest - q.dest); // Compare by destination
                 }
             });
+        } else {
+            System.err.println("Note that you have to ensure the data is sorted for both src and dest, otherwise storing it will fail");
         }
 
         this.numNodes = numNodes;

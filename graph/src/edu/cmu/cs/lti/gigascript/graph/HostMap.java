@@ -26,9 +26,6 @@ public class HostMap {
        String line;
        while ((line = br.readLine()) != null) {
            String[] fields = line.split("\t");
-           if (fields.length != 5){
-               System.out.print(line);
-           }
            idMap.put(fields[0], Integer.parseInt(fields[1]));
        }
 
@@ -45,9 +42,6 @@ public class HostMap {
         String line;
         while ((line = br.readLine()) != null) {
             String[] fields = line.split("\t");
-            if (fields.length != 5){
-                System.out.print(line);
-            }
             idMap.put(Integer.parseInt(fields[1]),fields[0]);
         }
 

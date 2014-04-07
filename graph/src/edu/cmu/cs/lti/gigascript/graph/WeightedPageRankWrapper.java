@@ -39,10 +39,16 @@ public class WeightedPageRankWrapper {
     }
 
     public int[] topKIndex(int k) throws IllegalAccessException {
-        int[] topkIndex = new int[k];
+        if (results == null) {
+            throw new IllegalAccessException("Haven't run pagerank yet!");
+        }
         int min = k > results.size() ? results.size() : k;
-        for (int i = min-1; i < results.size(); i++) {
-            topkIndex[i] = results.get(i).getKey();
+        int[] topkIndex = new int[min];
+
+        int count = 0;
+        for (int i = results.size() - min ; i< results.size(); i++){
+            topkIndex[count] = results.get(i).getLeft();
+            count ++;
         }
         return topkIndex;
     }
@@ -52,7 +58,7 @@ public class WeightedPageRankWrapper {
             throw new IllegalAccessException("Haven't run pagerank yet!");
         } else {
             int min = k > results.size() ? results.size() : k;
-            return results.subList(min-1,results.size()-1);
+            return results.subList(results.size()-min,results.size());
         }
     }
 

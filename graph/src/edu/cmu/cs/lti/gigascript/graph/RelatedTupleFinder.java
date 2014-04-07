@@ -26,7 +26,7 @@ public class RelatedTupleFinder {
 
     private WeightedPageRankWrapper findRelatedTuples(ArcLabelledImmutableGraph graph, Set<Integer> targetNodes){
         System.err.println("Building the subgraph.");
-        ArcLabelledSubGraph subgraph = new ArcLabelledSubGraph(graph, (targetNodes), 2, true);
+        ArcLabelledSubGraph subgraph = new ArcLabelledSubGraph(graph, targetNodes, 2, true);
         List<Triple<Integer, Integer, Float>> arcList = subgraph.getArcList();
         ArcLabelledImmutableGraph subGraphAsGraph = GraphUtils.buildWeightedGraphFromTriples(arcList);
         System.err.println("Number of nodes in subgraph "+subGraphAsGraph.numNodes());
@@ -65,20 +65,22 @@ public class RelatedTupleFinder {
         Configuration config = new Configuration(new File(configPath));
 
         String targetNodePath = config.get("edu.cmu.cs.lti.gigaScript.graph.node.targets.path");
-
         File targetFile = new File(targetNodePath);
 
-        String tuplePath = "";
-        int offset = -1;
+        String tuplePath = config.get("edu.cmu.cs.lti.gigaScript.graph.node.mapping.path");
+        int offset = config.getInt("edu.cmu.cs.lti.gigaScript.graph.node.base"); //78195158;
 
-        ArcLabelledImmutableGraph graph = GraphUtils.loadAsArcLablelled("storage/graph/", "edgeSent", false);
+        String storePath = config.get("edu.cmu.cs.lti.gigaScript.graph.base.dir");
+        String graphName = config.get("edu.cmu.cs.lti.gigaScript.graph.name");
+
+        ArcLabelledImmutableGraph graph = GraphUtils.loadAsArcLablelled(storePath, graphName, false);
 
         Joiner commaJoiner = Joiner.on(" , ");
 
         for (String line: FileUtils.readLines(targetFile)) {
             Set<Integer> targetNodes = new HashSet<Integer>();
             String[] parts = line.split(" ");
-            targetNodes.add(Integer.parseInt(parts[1]));
+            targetNodes.add(Integer.parseInt(parts[1])-offset);
 
             RelatedTupleFinder finder = new RelatedTupleFinder();
             WeightedPageRankWrapper wrapper = finder.findRelatedTuples(graph,targetNodes);
