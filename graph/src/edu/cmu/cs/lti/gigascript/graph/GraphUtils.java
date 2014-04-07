@@ -9,8 +9,7 @@ import it.unimi.dsi.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,16 +28,47 @@ public class GraphUtils {
      * @param numNodes
      * @return an ArclabelledImmutableGraph representing the es.yrbcn.graph.weighted graph
      */
-    public static ArcLabelledImmutableGraph buildWeightedGraphFromFile(File integerListFile, int numNodes) throws IOException {
+    public static ArcLabelledImmutableGraph buildWeightedGraphFromFile(File integerListFile, int numNodes, boolean sorted) throws IOException {
         List<WeightedArc> weightedArcArray = new ArrayList<WeightedArc>();
         for (String line : FileUtils.readLines(integerListFile)) {
             WeightedArc arc = new WeightedArc(line);
             weightedArcArray.add(arc);
         }
 
-        ArcLabelledImmutableGraph aig = new WeightedBVGraph(weightedArcArray.toArray(new WeightedArc[weightedArcArray.size()]), numNodes);
+        ArcLabelledImmutableGraph aig = new WeightedBVGraph(weightedArcArray.toArray(new WeightedArc[weightedArcArray.size()]), numNodes, sorted);
 
         return aig;
+    }
+
+    /**
+     * Build from the Integer list file a ArclabelledImmutableGraph, the label actually encode weight of an arc,
+     * but it need a parameter to specify number of nodes this graph will have
+     *
+     * @param integerListFile
+     * @param numNodes
+     * @return an ArclabelledImmutableGraph representing the es.yrbcn.graph.weighted graph
+     */
+    public static ArcLabelledImmutableGraph buildWeightedGraphFromFile(File integerListFile, int numNodes, int numberArc, int offset, boolean sorted) throws IOException {
+        WeightedArc[] weightedArcs = new WeightedArc[numberArc];
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(integerListFile), "ASCII"), 10 * 1024 * 1024);
+
+        String line;
+        int lineno = 0;
+        while ((line = br.readLine()) != null) {
+            try {
+                weightedArcs[lineno] = new WeightedArc(line, offset);
+            } catch (NumberFormatException e) {
+                System.err.println("Wrong formatted line: "+line);
+            }
+            lineno++;
+
+            if (lineno % 10000000 == 0){
+                System.out.println(String.format("Processed %d lines",lineno));
+            }
+        }
+
+        return  new WeightedBVGraph(weightedArcs, numNodes, sorted);
     }
 
     /**

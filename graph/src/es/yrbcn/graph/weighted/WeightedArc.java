@@ -1,27 +1,34 @@
 package es.yrbcn.graph.weighted;
 
 public class WeightedArc {
-	public int src;
+    public int src;
 
-	public int dest;
+    public int dest;
 
-	public float weight;
+    public float weight;
 
-	public WeightedArc(int src, int dest, float weight) {
-		this.src = src;
-		this.dest = dest;
-		this.weight = weight;
-	}
+    public WeightedArc(int src, int dest, float weight) {
+        this.src = src;
+        this.dest = dest;
+        this.weight = weight;
+    }
 
-	public WeightedArc(String line) {
-		final String p[] = line.split(" ");
-		this.src = Integer.parseInt( p[0] );
-		this.dest = Integer.parseInt( p[1] );
-		this.weight = Float.parseFloat( p[2] );
-	}
-	
-	public String toString() {
-		return( "(" + src + "," + dest + "," + weight + ")" );
-	}
+    public WeightedArc(String line) {
+        final String p[] = line.split(" ");
+        this.src = Integer.parseInt(p[0]);
+        this.dest = Integer.parseInt(p[1]);
+        this.weight = Float.parseFloat(p[2]);
+    }
+
+    public WeightedArc(String line, int offset) {
+        final String p[] = line.split(" ");
+        this.src = Integer.parseInt(p[0]) - offset;
+        this.dest = Integer.parseInt(p[1]) - offset;
+        this.weight = Float.parseFloat(p[2]) - offset;
+    }
+
+    public String toString() {
+        return ("(" + src + "," + dest + "," + weight + ")");
+    }
 
 }

@@ -41,11 +41,13 @@ public class Configuration {
                 e.printStackTrace();
             }
         }
+        value = value.trim();
         if (key.endsWith(".dir")) {
             if (!value.endsWith("/")){
                 value += "/";
             }
         }
+
 
         return value;
     }
