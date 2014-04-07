@@ -4,8 +4,10 @@ import es.yrbcn.graph.weighted.WeightedPageRank;
 import es.yrbcn.graph.weighted.WeightedPageRankPowerMethod;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,10 +16,12 @@ import java.io.IOException;
  * Time: 3:00 AM
  */
 public class WeightedPageRankWrapper {
+    List<Pair<Integer, Double>> results;
+    WeightedPageRankPowerMethod pr;
+    WeightedPageRank.StoppingCriterion finalStop;
 
-    public static double[] run(ArcLabelledImmutableGraph g, double alpha, boolean stronglyPreferential, double threshold, int maxIter, DoubleList start, DoubleList preference) throws IOException {
-        WeightedPageRankPowerMethod pr = new WeightedPageRankPowerMethod(g);
-
+    public WeightedPageRankWrapper(ArcLabelledImmutableGraph g, double alpha, boolean stronglyPreferential, double threshold, int maxIter, DoubleList start, DoubleList preference) {
+        pr = new WeightedPageRankPowerMethod(g);
         pr.alpha = alpha;
         pr.stronglyPreferential = stronglyPreferential;
         pr.start = start;
@@ -25,9 +29,57 @@ public class WeightedPageRankWrapper {
 
         WeightedPageRank.NormDeltaStoppingCriterion deltaStop = new WeightedPageRank.NormDeltaStoppingCriterion(threshold);
         WeightedPageRank.IterationNumberStoppingCriterion iterStop = new WeightedPageRank.IterationNumberStoppingCriterion(maxIter);
-        WeightedPageRank.StoppingCriterion finalStop = WeightedPageRank.or(deltaStop, iterStop);
+        finalStop = WeightedPageRank.or(deltaStop, iterStop);
 
+        try {
+            run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int[] topKIndex(int k) throws IllegalAccessException {
+        int[] topkIndex = new int[k];
+        int min = k > results.size() ? results.size() : k;
+        for (int i = min-1; i < results.size(); i++) {
+            topkIndex[i] = results.get(i).getKey();
+        }
+        return topkIndex;
+    }
+
+    public List<Pair<Integer, Double>> topK(int k) throws IllegalAccessException {
+        if (results == null) {
+            throw new IllegalAccessException("Haven't run pagerank yet!");
+        } else {
+            int min = k > results.size() ? results.size() : k;
+            return results.subList(min-1,results.size()-1);
+        }
+    }
+
+    public List<Pair<Integer, Double>> run() throws IOException {
         pr.stepUntil(finalStop);
-        return pr.rank;
+        double[] rank = pr.rank;
+
+        PriorityQueue<Pair<Integer, Double>> queue = new PriorityQueue<Pair<Integer, Double>>(rank.length, new RankPairComparator());
+
+        for (int i = 0; i < rank.length; i++) {
+            queue.add(Pair.of(i, rank[i]));
+        }
+
+        Iterator<Pair<Integer,Double>> iter = queue.iterator();
+        results =  new ArrayList<Pair<Integer, Double>>(queue.size());
+        while (iter.hasNext()){
+            results.add(iter.next());
+        }
+
+        return results;
+    }
+
+
+    class RankPairComparator implements Comparator<Pair<Integer, Double>> {
+        @Override
+        public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+            return o1.getValue().compareTo(o2.getValue());
+        }
     }
 }

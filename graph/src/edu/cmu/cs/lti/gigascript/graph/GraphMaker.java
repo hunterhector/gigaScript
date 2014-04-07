@@ -1,6 +1,9 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
-import java.io.*;
+import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,18 +18,15 @@ public class GraphMaker {
     }
 
     public static void main(String[] args) throws IOException {
-        File bigramFile = new File(args[0]);
-        System.out.println("Reading the bigram counts");
-        FileReader file = new FileReader(bigramFile);
-        BufferedReader br = new BufferedReader(file);
+        File edgeFile = new File(args[0]);
 
-        String line;
-        while ((line = br.readLine()) != null) {
-            String[] parts = line.trim().split("\t");
+        int nodeNumber = 50943700;
+        int nodeBase = 0;
+        int scaledTargetNodeId = 1075;
 
-            if (parts.length != 5) {
-                continue;
-            }
-        }
+        System.err.println("Building the full graph");
+        ArcLabelledImmutableGraph graph = GraphUtils.buildWeightedGraphFromFile(new File("edgeFile"), nodeNumber);
+        GraphUtils.storeWeightedGraph(graph, "storage/graph/", "edgeSent");
+
     }
 }

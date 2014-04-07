@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
+import com.google.common.base.Joiner;
 import es.yrbcn.graph.weighted.WeightedArc;
 import es.yrbcn.graph.weighted.WeightedBVGraph;
 import es.yrbcn.graph.weighted.WeightedPageRank;
@@ -8,6 +9,7 @@ import it.unimi.dsi.webgraph.BVGraph;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
 import it.unimi.dsi.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.File;
@@ -71,14 +73,14 @@ public class GraphUtils {
         System.err.println("Graph stored.");
     }
 
-    public BVGraph loadBVGraph(String path, String basename) throws IOException {
+    public static BVGraph loadBVGraph(String path, String basename) throws IOException {
         String fullPath = path + basename;
         System.err.println("Loading the Graph from "+fullPath);
         BVGraph g = BVGraph.load(fullPath);
         return g;
     }
 
-    public ArcLabelledImmutableGraph loadAsArcLablelled(String path, String baseName, boolean offline) throws IOException {
+    public static ArcLabelledImmutableGraph loadAsArcLablelled(String path, String baseName, boolean offline) throws IOException {
         String fullPath = path + baseName;
         System.err.println("Loading the graph from " + fullPath + " as ArcLablelledGraph");
         ArcLabelledImmutableGraph g = (offline) ? ArcLabelledImmutableGraph.loadOffline(fullPath) : ArcLabelledImmutableGraph.load(fullPath);
@@ -86,34 +88,36 @@ public class GraphUtils {
         return g;
     }
 
-    public static void main(String[] argv) throws IOException {
-        int nodeNumber = 51050130;
-        int nodeBase = 78195157;
-        int scaledTargetNodeId = 110658549 - nodeBase - 1;
+    public static void main(String[] argv) throws IOException, IllegalAccessException {
+        int scaledTargetNodeId = 1075;
 
-        double[] zeroArray = new double[nodeNumber];
+        ArcLabelledImmutableGraph graph = loadAsArcLablelled("storage/graph/", "edgeSent", false);
+
+        System.err.println("Building the subgraph");
+        Set<Integer> targetNodes = new HashSet<Integer>();
+        targetNodes.add(scaledTargetNodeId);
+
+        ArcLabelledSubGraph subgraph = new ArcLabelledSubGraph(graph, (targetNodes), 2, true);
+        List<Triple<Integer, Integer, Float>> arcList = subgraph.getArcList();
+        ArcLabelledImmutableGraph subGraphAsGraph = GraphUtils.buildWeightedGraphFromTriples(arcList);
+        System.err.println("Number of nodes in subgraph "+subGraphAsGraph.numNodes());
+
+        double[] zeroArray = new double[subgraph.subgraphSize];
+        int targetNodeIdOnSub = subgraph.fromSupergraphNode(scaledTargetNodeId);
         //initial vector assign to nodes at the start of pagerank
         DoubleArrayList initialVector = new DoubleArrayList(zeroArray); //build up during buildReferentArcList
         //preference vector for pagerank
         DoubleArrayList preferenceVector = new DoubleArrayList(zeroArray);
-        Set<Integer> targetNodes = new HashSet<Integer>();
-        targetNodes.add(scaledTargetNodeId);
-        initialVector.set(scaledTargetNodeId, 1);
-        preferenceVector.set(scaledTargetNodeId, 1);
+        initialVector.set(targetNodeIdOnSub, 1);
+        preferenceVector.set(targetNodeIdOnSub, 1);
 
-        System.err.println("Building the full graph");
-        ArcLabelledImmutableGraph graph = buildWeightedGraphFromFile(new File("weightedEdgeSent"), 51050130);
-        storeWeightedGraph(graph,"storage/graph/","edgeSent");
-
-        System.err.println("Building the subgraph");
-        ArcLabelledSubGraph subgraph = new ArcLabelledSubGraph(graph, (targetNodes), 2, true);
-        List<Triple<Integer, Integer, Float>> arcList = subgraph.getArcList();
-        ArcLabelledImmutableGraph subGraphAsGraph = GraphUtils.buildWeightedGraphFromTriples(arcList);
 
         System.err.println("Run PageRank");
-        double[] pageWeights = WeightedPageRankWrapper.run(subGraphAsGraph, WeightedPageRank.DEFAULT_ALPHA, false, WeightedPageRank.DEFAULT_THRESHOLD, 20, (initialVector), preferenceVector);
-        Arrays.sort(pageWeights);
-        double[] tops = Arrays.copyOfRange(pageWeights,pageWeights.length-4,pageWeights.length);
-        System.out.println(Arrays.toString(tops));
+        WeightedPageRankWrapper wrapper = new WeightedPageRankWrapper(subGraphAsGraph, WeightedPageRank.DEFAULT_ALPHA, false, WeightedPageRank.DEFAULT_THRESHOLD, 20, (initialVector), preferenceVector);
+        List<Pair<Integer, Double>> prResults = wrapper.topK(10);
+
+        Joiner commaJoiner = Joiner.on(" , ");
+
+        System.out.println(commaJoiner.join(prResults));
     }
 }

@@ -17,8 +17,6 @@ import java.util.*;
  */
 public class ArcLabelledSubGraph {
     private ArcLabelledImmutableGraph superGraph;
-    private Set<Integer> nodeSet;
-    private int hop;
     private boolean removeNonPositiveWeightedArc;
 
     int supergraphNumNodes;
@@ -29,14 +27,16 @@ public class ArcLabelledSubGraph {
     List<Triple<Integer, Integer, Float>> subgraphArcList;
     int subgraphSize;
 
-
     public ArcLabelledSubGraph(ArcLabelledImmutableGraph superGraph,Set<Integer> nodeSet, int hop, boolean removeNonPositiveWeightedArc){
         this.superGraph = superGraph;
-        this.nodeSet = nodeSet;
-        this.hop = hop;
         this.removeNonPositiveWeightedArc = removeNonPositiveWeightedArc;
 
         supergraphNumNodes = superGraph.numNodes();
+        supergraphNode = new int[supergraphNumNodes];
+        for (int i = 0 ; i < supergraphNode.length; i++){
+            supergraphNode[i] = -1;
+        }
+
         subgraphNode = ArrayUtils.toPrimitive(nodeSet.toArray(new Integer[nodeSet.size()]));
         Arrays.sort(subgraphNode);
         initialSubGraphNode = subgraphNode;
@@ -116,7 +116,7 @@ public class ArcLabelledSubGraph {
     }
 
     private int[] updateGraphNodes(int[] oldSubGraphNode, Set<Integer> newNodes){
-        List<Integer> newSubGraphNode = Arrays.asList(ArrayUtils.toObject(oldSubGraphNode));
+        List<Integer> newSubGraphNode = new ArrayList<Integer>(Arrays.asList(ArrayUtils.toObject(oldSubGraphNode)));
         newSubGraphNode.addAll(newNodes);
         int[] newSubGraphNodePrimitive = ArrayUtils.toPrimitive(newSubGraphNode.toArray(new Integer[newSubGraphNode.size()]));
         updateSuperGraphRecord(newSubGraphNodePrimitive);

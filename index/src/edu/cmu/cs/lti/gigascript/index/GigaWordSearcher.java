@@ -11,7 +11,6 @@ import org.apache.solr.common.SolrDocumentList;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,7 +20,7 @@ import java.util.Collection;
  */
 public class GigaWordSearcher {
     public static void main(String[] argv) throws IOException, SolrServerException {
-        String propPath = "../settings.properties";
+        String propPath = "settings.properties";
         if (argv.length < 1) {
             System.err.println("Missing property file argument! Will try default property.");
         } else {
@@ -32,20 +31,20 @@ public class GigaWordSearcher {
         SolrServer server = new HttpSolrServer(config.get("edu.cmu.cs.lti.gigaScript.solr.host"));
 
         SolrQuery query = new SolrQuery();
-        query.setQuery("los angles");
+        query.setQuery("bombing, bomb, explode");
         query.setFields("id","content","title");
         query.setStart(0);
+        query.setRows(10000);
 
         QueryResponse response = server.query(query);
 
-        System.out.println(response);
+//        System.out.println(response);
 
         SolrDocumentList results = response.getResults();
         for (int i = 0; i < results.size(); i++){
             SolrDocument result = results.get(i);
-
-            Collection<String> fieldNams = result.getFieldNames();
-            System.out.println(result.toString());
+//            System.out.println(result.toString());
+            System.out.println(result.getFieldValue("id"));
         }
     }
 }
