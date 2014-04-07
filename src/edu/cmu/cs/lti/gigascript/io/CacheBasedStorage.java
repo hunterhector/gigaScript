@@ -82,6 +82,10 @@ public abstract class CacheBasedStorage extends GigaStorage {
         }
     }
 
+    public void setAdditionalStr(String additionalStr){
+        this.additionalStr = additionalStr;
+    }
+
     /**
      * Method for clean up and flush to disk
      */
@@ -92,10 +96,5 @@ public abstract class CacheBasedStorage extends GigaStorage {
         tupleEntityTypes.clear();
         bigramInfoTable.clear();
         hasNoTuples = true;
-    }
-
-    public void flush(String additionalStr){
-        this.additionalStr = additionalStr;
-        flush();
     }
 }

@@ -131,6 +131,7 @@ public class FullSystemRunner {
                     }
                 }
 
+                gigaStorage.setAdditionalStr(docId);
                 processed++;
 
                 AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
@@ -227,7 +228,7 @@ public class FullSystemRunner {
                     }
                 }
                 if (processed % docNum2Flush == 0) {
-                    gigaStorage.flush(docId);
+                    gigaStorage.flush();
                 }
                 if (consoleMode) {
                     //nice progress view when we can view it in the console
@@ -240,7 +241,7 @@ public class FullSystemRunner {
                 }
             }
 
-            gigaStorage.flush(docId);
+            gigaStorage.flush();
 
             System.out.println();
 
