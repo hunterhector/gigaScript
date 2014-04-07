@@ -21,6 +21,7 @@ import java.io.IOException;
 public class GigaWordSearcher {
     public static void main(String[] argv) throws IOException, SolrServerException {
         String propPath = "settings.properties";
+
         if (argv.length < 1) {
             System.err.println("Missing property file argument! Will try default property.");
         } else {

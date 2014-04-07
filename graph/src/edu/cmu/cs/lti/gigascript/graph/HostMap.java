@@ -1,9 +1,12 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
-import gnu.trove.map.hash.TByteByteHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,7 +16,7 @@ import java.io.*;
  */
 public class HostMap {
 
-   public static TObjectIntHashMap<String> loadIdMap(File tupleFile) throws IOException {
+   public static TObjectIntHashMap<String> loadToIdMap(File tupleFile) throws IOException {
        TObjectIntHashMap<String> idMap = new TObjectIntHashMap<String>();
 
        System.out.println("Reading the tuple mapping");
@@ -32,27 +35,10 @@ public class HostMap {
        return idMap;
    }
 
-   public static TObjectIntHashMap<String> loadCountsMap(File tupleFile) throws IOException{
-       TObjectIntHashMap<String> countMap = new TObjectIntHashMap<String>();
-       System.out.println("Reading the count mapping");
-       FileReader file = new FileReader(tupleFile);
-       BufferedReader br = new BufferedReader(file);
+    public static TIntObjectHashMap<String> loadFromIdMap(File tupleFile) throws IOException {
+        TIntObjectHashMap<String> idMap = new TIntObjectHashMap<String>();
 
-       String line;
-       while ((line = br.readLine()) != null) {
-           String[] fields = line.split("\t");
-           if (fields.length != 5){
-               System.out.print(line);
-           }
-           countMap.put(fields[0], Integer.parseInt(fields[2]));
-       }
-
-       return countMap;
-   }
-
-    public static void loadTypeMap(File tupleFile) throws IOException {
-        TByteByteHashMap typeMap = new TByteByteHashMap();
-        System.out.println("Reading the type mapping");
+        System.out.println("Reading the tuple mapping");
         FileReader file = new FileReader(tupleFile);
         BufferedReader br = new BufferedReader(file);
 
@@ -62,8 +48,10 @@ public class HostMap {
             if (fields.length != 5){
                 System.out.print(line);
             }
+            idMap.put(Integer.parseInt(fields[1]),fields[0]);
         }
 
+        return idMap;
     }
 
     public static void main(String[] args) throws IOException {
@@ -74,7 +62,7 @@ public class HostMap {
                 +Runtime.getRuntime().freeMemory();
         System.out.println("Free memory before (MB): " + usableFreeMemory/(1024 * 1024 *1.0));
 
-        TObjectIntHashMap<String> idMap = loadIdMap(new File("scripts/tuplesOther"));
+        TObjectIntHashMap<String> idMap = loadToIdMap(new File("scripts/tuplesOther"));
 
         System.out.println(idMap.size());
 

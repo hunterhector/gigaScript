@@ -12,21 +12,15 @@ import java.io.IOException;
  * Time: 9:36 PM
  */
 public class GraphMaker {
-
-    private static void makeBigramCountGraph(){
-
-    }
-
     public static void main(String[] args) throws IOException {
         File edgeFile = new File(args[0]);
 
-        int nodeNumber = 50943700;
-        int nodeBase = 0;
+        int nodeNumber = Integer.parseInt(args[1]); //50943700;
+        int nodeBase = Integer.parseInt(args[2]); //0;
         int scaledTargetNodeId = 1075;
 
         System.err.println("Building the full graph");
         ArcLabelledImmutableGraph graph = GraphUtils.buildWeightedGraphFromFile(new File("edgeFile"), nodeNumber);
         GraphUtils.storeWeightedGraph(graph, "storage/graph/", "edgeSent");
-
     }
 }

@@ -16,7 +16,6 @@ import edu.jhu.agiga.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.commons.vfs2.FileUtil;
 
 import javax.naming.ConfigurationException;
 import java.io.File;
@@ -112,6 +111,8 @@ public class FullSystemRunner {
         long startTime = System.currentTimeMillis();
         long batchStartTime = startTime;
 
+        int processed = 0;
+
         for (File currentFile : listOfFiles) {
             String extension = Files.getFileExtension(currentFile.getName());
             if (!extension.equals("gz")){
@@ -129,6 +130,8 @@ public class FullSystemRunner {
                         continue;
                     }
                 }
+
+                processed++;
 
                 AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
 
@@ -223,16 +226,16 @@ public class FullSystemRunner {
                         }
                     }
                 }
-                if (reader.getNumDocs() % docNum2Flush == 0) {
+                if (processed % docNum2Flush == 0) {
                     gigaStorage.flush(docId);
                 }
                 if (consoleMode) {
                     //nice progress view when we can view it in the console
-                    System.out.print("\r" + reader.getNumDocs());
+                    System.out.print("\r" + processed);
                 } else {
-                    if (reader.getNumDocs() % 500 == 0) {
+                    if (processed % 500 == 0) {
                         //this will be more readable if we would like to direct the console output to file
-                        System.out.print(reader.getNumDocs() + " ");
+                        System.out.print(processed + " ");
                     }
                 }
             }
