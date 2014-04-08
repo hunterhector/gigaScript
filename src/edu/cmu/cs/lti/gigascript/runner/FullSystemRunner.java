@@ -60,17 +60,18 @@ public class FullSystemRunner {
         //Subset only?
         boolean doFilter = config.getBoolean("edu.cmu.cs.lti.gigaScript.filter");
 
+        Set<String> docIdsToFilter = new HashSet<String>();
         Set<String> filesToFilter = new HashSet<String>();
 
         if (doFilter) {
             File filterFile = new File(config.get("edu.cmu.cs.lti.gigaScript.filterFile"));
-            for (String line : FileUtils.readLines(filterFile,"ascii")){
-                String[] parts = line.trim().split("\t");
-                if (parts.length == 2){
-                    filesToFilter.add(parts[1]);
-                }
+            for (String line : FileUtils.readLines(filterFile, "ascii")) {
+                String docId = line.trim();
+                docIdsToFilter.add(docId);
+                String zipName = docId.split("\\.")[0].toLowerCase().substring(0,"nyt_eng_200001".length()) + ".xml.gz";
+                filesToFilter.add(zipName);
             }
-            logger.log(Level.INFO,"Will only produce result for the chosen "+filesToFilter.size()+" documents.");
+            logger.log(Level.INFO, "Will only produce result for the chosen " + docIdsToFilter.size() + " documents.");
         }
 
 
@@ -115,18 +116,22 @@ public class FullSystemRunner {
 
         for (File currentFile : listOfFiles) {
             String extension = Files.getFileExtension(currentFile.getName());
-            if (!extension.equals("gz")){
+            if (!extension.equals("gz")) {
+                continue;
+            }
+
+            if (!filesToFilter.contains(currentFile.getName())) {
                 continue;
             }
 
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
             System.out.println("Processing achrive: " + currentFile.getName());
 
-            String docId ="";
+            String docId = "";
             for (AgigaDocument doc : reader) {
                 docId = doc.getDocId();
-                if (doFilter){
-                    if (!filesToFilter.contains(doc.getDocId())){
+                if (doFilter) {
+                    if (!docIdsToFilter.contains(doc.getDocId())) {
                         continue;
                     }
                 }
@@ -190,7 +195,7 @@ public class FullSystemRunner {
 
                 ArrayList<Triple<AgigaArgument, AgigaArgument, String>> allTupleList = new ArrayList<Triple<AgigaArgument, AgigaArgument, String>>(allTuples);
 
-                for (int t1 = 0; t1 < allTupleList.size()-1; t1++) {
+                for (int t1 = 0; t1 < allTupleList.size() - 1; t1++) {
                     for (int t2 = t1 + 1; t2 < allTupleList.size(); t2++) {
                         Triple<AgigaArgument, AgigaArgument, String> tuple1 = allTupleList.get(t1);
                         Triple<AgigaArgument, AgigaArgument, String> tuple2 = allTupleList.get(t2);
