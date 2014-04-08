@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.gigascript.graph;
 import com.google.common.base.Joiner;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import es.yrbcn.graph.weighted.WeightedPageRank;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
 import org.apache.commons.io.FileUtils;
@@ -73,22 +74,37 @@ public class RelatedTupleFinder {
         String storePath = config.get("edu.cmu.cs.lti.gigaScript.graph.base.dir");
         String graphName = config.get("edu.cmu.cs.lti.gigaScript.graph.name");
 
+        String outputPath = config.get("edu.cmu.cs.lti.gigaScript.graph.script.outpath");
+
         ArcLabelledImmutableGraph graph = GraphUtils.loadAsArcLablelled(storePath, graphName, false);
 
         Joiner commaJoiner = Joiner.on(" , ");
 
+        TIntObjectHashMap<String> hostMap = HostMap.loadFromIdMap(new File(tuplePath));
+        
         for (String line: FileUtils.readLines(targetFile)) {
             Set<Integer> targetNodes = new HashSet<Integer>();
             String[] parts = line.split(" ");
-            targetNodes.add(Integer.parseInt(parts[1])-offset);
+            int targetNode = Integer.parseInt(parts[1]);
+            targetNodes.add(targetNode-offset);
 
             RelatedTupleFinder finder = new RelatedTupleFinder();
             WeightedPageRankWrapper wrapper = finder.findRelatedTuples(graph,targetNodes);
 
             List<Pair<Integer, Double>> prResults = wrapper.topK(10);
-            System.out.println(commaJoiner.join(prResults));
-            String[] relatedTuples = GraphUtils.ToTuple(wrapper.topKIndex(10), offset, HostMap.loadFromIdMap(new File(tuplePath)));
-            System.out.println(commaJoiner.join(relatedTuples));
+            String[] relatedTuples = GraphUtils.ToTuple(wrapper.topKIndex(10), offset, hostMap);
+
+            System.out.println("Finish script generation around "+hostMap.get(targetNode)+" : "+targetNode);
+
+            List<String> scriptOut = new ArrayList<String>();
+
+            scriptOut.add("=======================");
+            scriptOut.add("For tuple "+hostMap.get(targetNode)+" : "+targetNode);
+            scriptOut.add("=======================");
+            scriptOut.add(commaJoiner.join(prResults));
+            scriptOut.add(commaJoiner.join(relatedTuples));
+
+            FileUtils.writeLines(new File(outputPath), scriptOut,true);
         }
     }
 }
