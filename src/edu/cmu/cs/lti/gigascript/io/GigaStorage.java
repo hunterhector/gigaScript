@@ -9,6 +9,6 @@ import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
  * Time: 4:10 PM
  */
 public abstract class GigaStorage {
-    public abstract long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation);
+    public abstract long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation, String docId);
     public abstract void addGigaBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality);
 }

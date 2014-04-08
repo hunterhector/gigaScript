@@ -25,6 +25,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
     TObjectIntHashMap<Triple<String, String, String>> tupleIds = new TObjectIntHashMap<Triple<String, String, String>>();
     List<Pair<String, String>> tupleEntityTypes = new ArrayList<Pair<String, String>>();
     TIntArrayList tupleCount = new TIntArrayList();
+    List<List<String>> tupleSource = new ArrayList<List<String>>();
     Table<Long, Long, BigramInfo> bigramInfoTable = HashBasedTable.create();
 
     String additionalStr = "";
@@ -40,7 +41,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
         outputCooccStoreName = config.get("edu.cmu.cs.lti.gigaScript.bigram.storage.name");
     }
 
-    protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
+    protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, String relation,String docId) {
         Triple<String, String, String> tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(), relation);
 
         int tupleId;
@@ -64,9 +65,13 @@ public abstract class CacheBasedStorage extends GigaStorage {
 
         if (newTuple) {
             tupleEntityTypes.add(Pair.of(arg0.getEntityType(), arg1.getEntityType()));
+            List<String> newSource = new ArrayList<String>();
+            newSource.add(docId);
+            tupleSource.add(newSource);
             tupleCount.add(1);
         } else {
             tupleCount.set(tupleId, tupleCount.get(tupleId) + 1);
+            tupleSource.get(tupleId).add(docId);
         }
 
         return tupleId;
@@ -95,6 +100,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
         tupleIds.clear();
         tupleEntityTypes.clear();
         bigramInfoTable.clear();
+        tupleSource.clear();
         hasNoTuples = true;
     }
 }

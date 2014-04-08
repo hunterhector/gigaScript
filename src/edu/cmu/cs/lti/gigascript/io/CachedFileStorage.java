@@ -36,8 +36,8 @@ public class CachedFileStorage extends CacheBasedStorage {
     }
 
     @Override
-    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
-        return cacheTuple(arg0, arg1, relation);
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation, String docId) {
+        return cacheTuple(arg0, arg1, relation, docId);
     }
 
     @Override

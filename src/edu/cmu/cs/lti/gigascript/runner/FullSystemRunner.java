@@ -127,7 +127,7 @@ public class FullSystemRunner {
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
             System.out.println("Processing achrive: " + currentFile.getName());
 
-            String docId = "";
+            String docId;
             for (AgigaDocument doc : reader) {
                 docId = doc.getDocId();
                 if (doFilter) {
@@ -136,7 +136,7 @@ public class FullSystemRunner {
                     }
                 }
 
-                gigaStorage.setAdditionalStr(docId);
+                gigaStorage.setAdditionalStr(docId);//currently not used
                 processed++;
 
                 AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
@@ -204,11 +204,11 @@ public class FullSystemRunner {
                         Pair<AgigaArgument, AgigaArgument> tuple2Keys = Pair.of(tuple2.getLeft(), tuple2.getMiddle());
 
                         if (!tuple2StorageIdMapping.containsKey(tuple1Keys)) {
-                            tuple2StorageIdMapping.put(tuple1Keys, saveTuple(tuple1, gigaStorage));
+                            tuple2StorageIdMapping.put(tuple1Keys, saveTuple(tuple1, gigaStorage,docId));
                         }
 
                         if (!tuple2StorageIdMapping.containsKey(tuple2Keys)) {
-                            tuple2StorageIdMapping.put(tuple2Keys, saveTuple(tuple2, gigaStorage));
+                            tuple2StorageIdMapping.put(tuple2Keys, saveTuple(tuple2, gigaStorage,docId));
                         }
 
                         int tupleDist = t2 - t1;
@@ -265,7 +265,7 @@ public class FullSystemRunner {
     }
 
 
-    private static List<Long> saveTuple(Triple<AgigaArgument, AgigaArgument, String> tuple, GigaStorage store) {
+    private static List<Long> saveTuple(Triple<AgigaArgument, AgigaArgument, String> tuple, GigaStorage store, String docId) {
         List<Long> tupleIds = new ArrayList<Long>();
 
         AgigaArgument leftArg = tuple.getLeft();
@@ -275,7 +275,7 @@ public class FullSystemRunner {
 //        System.out.println(leftArg.getHeadWordLemma()+" "+rightArg.getHeadWordLemma()+" "+relation);
 
         //the orignal tuples
-        long tupleId = store.addGigaTuple(leftArg, rightArg, relation);
+        long tupleId = store.addGigaTuple(leftArg, rightArg, relation, docId);
 
         tupleIds.add(tupleId);
 

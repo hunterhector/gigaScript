@@ -158,7 +158,8 @@ public class GigaDB extends CacheBasedStorage{
         logger.log(Level.INFO, "Bigram Table created successfully");
     }
 
-    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation) {
+    @Override
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation, String docId) {
         String arg0Hw = arg0.getHeadWordLemma().replace("'", "''");
         String arg1Hw = arg1.getHeadWordLemma().replace("'", "''");
 
@@ -203,6 +204,7 @@ public class GigaDB extends CacheBasedStorage{
         return -1;
     }
 
+    @Override
     public void addGigaBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality) {
         //1. search for the record
         try {
