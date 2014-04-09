@@ -35,15 +35,21 @@ public abstract class CacheBasedStorage extends GigaStorage {
     int outputFileId = 0;
     String outputTupleStoreName = "Tuples";
     String outputCooccStoreName = "BigramCounts";
+    boolean useLowerCase = true;
 
     public CacheBasedStorage(Configuration config) {
         outputTupleStoreName = config.get("edu.cmu.cs.lti.gigaScript.tuple.storage.name");
         outputCooccStoreName = config.get("edu.cmu.cs.lti.gigaScript.bigram.storage.name");
+        useLowerCase = config.getBoolean("edu.cmu.cs.lti.gigaScript.lowercase");
     }
 
     protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, String relation,String docId) {
-        Triple<String, String, String> tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(), relation);
-
+        Triple<String, String, String> tuple;
+        if (useLowerCase) {
+            tuple = Triple.of(arg0.getHeadWordLemma().toLowerCase(), arg1.getHeadWordLemma().toLowerCase(), relation.toLowerCase());
+        }else{
+            tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(), relation);
+        }
         int tupleId;
 
         boolean newTuple = true;

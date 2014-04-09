@@ -16,21 +16,21 @@ import java.io.IOException;
  */
 public class HostMap {
 
-   public static TObjectIntHashMap<String> loadToIdMap(File tupleFile) throws IOException {
-       TObjectIntHashMap<String> idMap = new TObjectIntHashMap<String>();
+    public static TObjectIntHashMap<String> loadToIdMap(File tupleFile) throws IOException {
+        TObjectIntHashMap<String> idMap = new TObjectIntHashMap<String>();
 
-       System.out.println("Reading the tuple mapping");
-       FileReader file = new FileReader(tupleFile);
-       BufferedReader br = new BufferedReader(file);
+        System.out.println("Reading the tuple mapping");
+        FileReader file = new FileReader(tupleFile);
+        BufferedReader br = new BufferedReader(file);
 
-       String line;
-       while ((line = br.readLine()) != null) {
-           String[] fields = line.split("\t");
-           idMap.put(fields[0], Integer.parseInt(fields[1]));
-       }
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] fields = line.split("\t");
+            idMap.put(fields[0], Integer.parseInt(fields[1]));
+        }
 
-       return idMap;
-   }
+        return idMap;
+    }
 
     public static TIntObjectHashMap<String> loadFromIdMap(File tupleFile) throws IOException {
         TIntObjectHashMap<String> idMap = new TIntObjectHashMap<String>();
@@ -42,27 +42,51 @@ public class HostMap {
         String line;
         while ((line = br.readLine()) != null) {
             String[] fields = line.split("\t");
-            idMap.put(Integer.parseInt(fields[1]),fields[0]);
+            idMap.put(Integer.parseInt(fields[1]), fields[0]);
         }
 
         return idMap;
     }
 
+    public static TIntObjectHashMap<int[]> loadSupportMap(File supportFile) throws IOException {
+        TIntObjectHashMap<int[]> supportMap = new TIntObjectHashMap<int[]>();
+
+        System.out.println("Reading the support mapping");
+        FileReader file = new FileReader(supportFile);
+        BufferedReader br = new BufferedReader(file);
+
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] fields = line.trim().split("\t");
+
+            int expandedId = Integer.parseInt(fields[1]);
+            String[] supports = fields[3].split(",");
+            int[] supportIds = new int[supports.length];
+
+            for (int i = 0; i < supports.length; i++) {
+                supportIds[i] = Integer.parseInt(supports[i]);
+            }
+
+            supportMap.put(expandedId, supportIds);
+        }
+        return supportMap;
+    }
+
     public static void main(String[] args) throws IOException {
         Runtime runtime = Runtime.getRuntime();
 
-        long usableFreeMemory= runtime.maxMemory()
-                -Runtime.getRuntime().totalMemory()
-                +Runtime.getRuntime().freeMemory();
-        System.out.println("Free memory before (MB): " + usableFreeMemory/(1024 * 1024 *1.0));
+        long usableFreeMemory = runtime.maxMemory()
+                - Runtime.getRuntime().totalMemory()
+                + Runtime.getRuntime().freeMemory();
+        System.out.println("Free memory before (MB): " + usableFreeMemory / (1024 * 1024 * 1.0));
 
         TObjectIntHashMap<String> idMap = loadToIdMap(new File("scripts/tuplesOther"));
 
         System.out.println(idMap.size());
 
         usableFreeMemory = runtime.maxMemory()
-                -Runtime.getRuntime().totalMemory()
-                +Runtime.getRuntime().freeMemory();
-        System.out.println("Free memory after (MB): " + usableFreeMemory/(1024 * 1024 *1.0));
+                - Runtime.getRuntime().totalMemory()
+                + Runtime.getRuntime().freeMemory();
+        System.out.println("Free memory after (MB): " + usableFreeMemory / (1024 * 1024 * 1.0));
     }
 }

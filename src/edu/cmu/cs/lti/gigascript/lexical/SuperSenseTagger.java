@@ -61,11 +61,11 @@ public class SuperSenseTagger {
                 String arg2 = tuple[tuple.length - 2];
                 String arg1 = tuple[0];
 
-                if (arg1Type.equals("-") || arg1Type.equals("MISC") || arg1Type.equals("O")) {
+                if (arg1Type.equals("-") || arg1Type.equals("MISC") || arg1Type.equals("O") ||  arg1Type.equals("null")) {
                     arg1Type = getWordNetSense(arg1, dict);
                 }
 
-                if (arg2Type.equals("-") || arg2Type.equals("MISC") || arg1Type.equals("O")) {
+                if (arg2Type.equals("-") || arg2Type.equals("MISC") || arg1Type.equals("O") ||  arg1Type.equals("null")) {
                     arg2Type = getWordNetSense(arg2, dict);
                 }
 

@@ -131,10 +131,12 @@ public class FullSystemRunner {
             for (AgigaDocument doc : reader) {
                 docId = doc.getDocId();
                 if (doFilter) {
-                    if (!docIdsToFilter.contains(doc.getDocId())) {
+                    if (!docIdsToFilter.contains(docId)) {
                         continue;
                     }
                 }
+
+                System.out.println("Processing document: " + docId);
 
                 gigaStorage.setAdditionalStr(docId);//currently not used
                 processed++;
@@ -233,6 +235,7 @@ public class FullSystemRunner {
                     }
                 }
                 if (processed % docNum2Flush == 0) {
+                    System.out.println("Flush for "+docNum2Flush+" documents");
                     gigaStorage.flush();
                 }
                 if (consoleMode) {
@@ -246,6 +249,7 @@ public class FullSystemRunner {
                 }
             }
 
+            System.out.println("Flush for document end");
             gigaStorage.flush();
 
             System.out.println();

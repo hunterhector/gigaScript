@@ -1,11 +1,15 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
+import es.yrbcn.graph.weighted.FixedWidthFloatLabel;
 import es.yrbcn.graph.weighted.WeightedArc;
 import es.yrbcn.graph.weighted.WeightedBVGraph;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.webgraph.BVGraph;
+import it.unimi.dsi.webgraph.Transform;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
 import it.unimi.dsi.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
+import it.unimi.dsi.webgraph.labelling.Label;
+import it.unimi.dsi.webgraph.labelling.LabelMergeStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -141,9 +145,38 @@ public class GraphUtils {
 
         for (int i = 0 ; i< ids.length;i ++){
             int id = ids[i];
-            tuples[i] = fromIdMap.get(id+offset);
+            if (fromIdMap.containsKey(id)) {
+                tuples[i] = fromIdMap.get(id + offset);
+            }else{
+                tuples[i] = "["+id+"]";
+            }
         }
 
         return tuples;
     }
+
+    public static ArcLabelledImmutableGraph getSymmetricGraph(ArcLabelledImmutableGraph g) throws IOException {
+        return Transform.union(g,transpose(g,1000000),new LabelMergeStrategy() {
+            @Override
+            public Label merge(Label first, Label second) {
+                if (first.wellKnownAttributeKey().equals(second.wellKnownAttributeKey())) {
+                    String key = first.wellKnownAttributeKey();
+                    return new FixedWidthFloatLabel(key, first.getFloat(key)*second.getFloat(key));
+                }else{
+                    throw new IllegalArgumentException("Key are different!");
+                }
+            }
+        });
+    }
+    /**
+     * Get the transpose graph of a labelled graph
+     * @param g The input graph
+     * @param batchSize Number of nodes to be loaded into memory at one time.
+     * @return
+     */
+    public static ArcLabelledImmutableGraph transpose(ArcLabelledImmutableGraph g,int batchSize) throws IOException {
+        return Transform.transposeOffline(g, batchSize);
+    }
+
+
 }

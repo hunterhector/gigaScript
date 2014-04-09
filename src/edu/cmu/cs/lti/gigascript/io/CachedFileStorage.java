@@ -55,6 +55,7 @@ public class CachedFileStorage extends CacheBasedStorage {
             writer.write("\t" + tupleId + "_" + outputFileId);
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t" + tupleEntityTypes.get(tupleId));
+            writer.write("\t" + tupleSource.get(tupleId));
             if (writeAddintionalInfo){
                 writer.write("\t");
                 writer.write(additionalStr);

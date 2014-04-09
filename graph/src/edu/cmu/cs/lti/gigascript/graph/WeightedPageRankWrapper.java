@@ -46,19 +46,29 @@ public class WeightedPageRankWrapper {
         int[] topkIndex = new int[min];
 
         int count = 0;
-        for (int i = results.size() - min ; i< results.size(); i++){
+//        for (int i = min -1  ; i >= 0; i--){
+        for (int i = results.size() -1 ; i >= results.size() - min; i--){
             topkIndex[count] = results.get(i).getLeft();
             count ++;
         }
         return topkIndex;
     }
 
-    public List<Pair<Integer, Double>> topK(int k) throws IllegalAccessException {
+    public double[] topKScore(int k) throws IllegalAccessException {
         if (results == null) {
             throw new IllegalAccessException("Haven't run pagerank yet!");
         } else {
             int min = k > results.size() ? results.size() : k;
-            return results.subList(results.size()-min,results.size());
+//            List<Pair<Integer, Double>> topKScore = results.subList(0, min);
+            double[] topkScores = new double[min];
+
+            int count = 0;
+//        for (int i = min -1  ; i >= 0; i--){
+            for (int i = results.size() -1 ; i >= results.size() - min; i--){
+                topkScores[count] = results.get(i).getRight();
+                count ++;
+            }
+            return topkScores;
         }
     }
 
@@ -66,21 +76,16 @@ public class WeightedPageRankWrapper {
         pr.stepUntil(finalStop);
         double[] rank = pr.rank;
 
-        PriorityQueue<Pair<Integer, Double>> queue = new PriorityQueue<Pair<Integer, Double>>(rank.length, new RankPairComparator());
+        results =  new ArrayList<Pair<Integer, Double>>(rank.length);
 
         for (int i = 0; i < rank.length; i++) {
-            queue.add(Pair.of(i, rank[i]));
+            results.add(Pair.of(i, rank[i]));
         }
 
-        Iterator<Pair<Integer,Double>> iter = queue.iterator();
-        results =  new ArrayList<Pair<Integer, Double>>(queue.size());
-        while (iter.hasNext()){
-            results.add(iter.next());
-        }
+        Collections.sort(results,new RankPairComparator());
 
         return results;
     }
-
 
     class RankPairComparator implements Comparator<Pair<Integer, Double>> {
         @Override

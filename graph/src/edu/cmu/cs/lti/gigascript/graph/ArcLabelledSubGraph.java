@@ -27,11 +27,14 @@ public class ArcLabelledSubGraph {
     List<Triple<Integer, Integer, Float>> subgraphArcList;
     int subgraphSize;
 
+    List<Triple<Integer, Integer, Float>> symmetricSubgraphArcList;
+
     public ArcLabelledSubGraph(ArcLabelledImmutableGraph superGraph,Set<Integer> nodeSet, int hop, boolean removeNonPositiveWeightedArc){
         this.superGraph = superGraph;
         this.removeNonPositiveWeightedArc = removeNonPositiveWeightedArc;
 
         supergraphNumNodes = superGraph.numNodes();
+        //store the mapping to super graph, if it is "-1", means this subgraph node is not created
         supergraphNode = new int[supergraphNumNodes];
         for (int i = 0 ; i < supergraphNode.length; i++){
             supergraphNode[i] = -1;
@@ -49,7 +52,7 @@ public class ArcLabelledSubGraph {
         subgraphArcList = res.getRight();
 
         subgraphSize = subgraphNode.length;
-        System.err.println(String.format("Subgraph size: %d;  Supergraph size: %d.",subgraphSize,supergraphNumNodes));
+        System.out.println(String.format("Subgraph size: %d;  Supergraph size: %d.",subgraphSize,supergraphNumNodes));
 
         if (subgraphSize > 0 && subgraphNode[subgraphSize - 1] >= supergraphNumNodes)
             throw new IllegalArgumentException("Subnode index out of bounds (larger than supergraph number of nodes): "+subgraphNode[subgraphSize - 1]);
@@ -60,11 +63,11 @@ public class ArcLabelledSubGraph {
      *
      * @param currentSubGraphNode The current sub graph nodes array
      * @param currentArcList The current arc list
-     * @param n number of hops desired to reach from the current graph
+     * @param hop number of hops desired to reach from the current graph
      * @return  A tuple containing the expanded sub graph nodes and arc list
      */
-    private Pair<int[], List<Triple<Integer,Integer,Float>>> build(int[] currentSubGraphNode,List<Triple<Integer,Integer,Float>> currentArcList,int n) {
-        if ( n == 0){
+    private Pair<int[], List<Triple<Integer,Integer,Float>>> build(int[] currentSubGraphNode,List<Triple<Integer,Integer,Float>> currentArcList,int hop) {
+        if ( hop == 0){
             return Pair.of(currentSubGraphNode,currentArcList);
         }else{
             ArcLabelledNodeIterator iter = superGraph.nodeIterator();
@@ -96,7 +99,10 @@ public class ArcLabelledSubGraph {
             int[] newSubGraphNode = updateGraphNodes(currentSubGraphNode, newNodes);
             List<Triple<Integer, Integer, Float>> expandArcList = expandArcList(currentArcList, newArcs);
 
-            return Pair.of(newSubGraphNode,expandArcList);
+//            System.out.println("Size of graph at hop "+hop+" : "+newSubGraphNode.length);
+
+            return build(newSubGraphNode,expandArcList,hop -1);
+//            return Pair.of(newSubGraphNode,expandArcList);
         }
     }
 
@@ -147,14 +153,39 @@ public class ArcLabelledSubGraph {
 
     /**
      * Return the subgraph as a arc list, each arc is defined by 2 Integer and a weight
-     * @return A ListBuffer that represent the graph
+     * @return A List that represent the graph
      */
     public List<Triple<Integer, Integer, Float>> getArcList() {
             return subgraphArcList;
     }
 
+    /**
+     * Return the subgraph as a arc list, each arc is defined by 2 Integer and a weight
+     * @return A List that represent the graph
+     */
+    public List<Triple<Integer, Integer, Float>> getSymmetricArcList() {
+        if (symmetricSubgraphArcList == null) {
+            symmetricSubgraphArcList = new ArrayList<Triple<Integer, Integer, Float>>();
+            List<Triple<Integer, Integer, Float>> inverseArcList = new ArrayList<Triple<Integer, Integer, Float>>();
+            for (Triple<Integer, Integer, Float> arc : subgraphArcList) {
+                inverseArcList.add(Triple.of(arc.getMiddle(), arc.getLeft(), arc.getRight()));
+            }
+
+            Collections.sort(subgraphArcList);
+            Collections.sort(inverseArcList);
+
+            for (int i = 0; i < subgraphArcList.size(); i++) {
+                Triple<Integer, Integer, Float> triple = subgraphArcList.get(i);
+                Triple<Integer, Integer, Float> reverseTriple = inverseArcList.get(i);
+                symmetricSubgraphArcList.add(Triple.of(triple.getLeft(),triple.getMiddle(),triple.getRight()*reverseTriple.getRight()));
+            }
+        }
+
+        return symmetricSubgraphArcList;
+    }
+
     private List<Triple<Integer,Integer,Float>> buildSelfConnectedArcList(int[] graphNodes) {
-        System.err.println("Building initial Arc List.");
+        System.out.println("Building initial Arc List.");
         List<Triple<Integer,Integer,Float>> tmpArcList = new ArrayList<Triple<Integer, Integer, Float>>();
         ArcLabelledNodeIterator iter = superGraph.nodeIterator();
         iter.next();
@@ -182,7 +213,6 @@ public class ArcLabelledSubGraph {
                 }
             }
         }
-
         return tmpArcList;
     }
 }
