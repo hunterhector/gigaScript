@@ -4,6 +4,7 @@ import com.google.common.collect.Table.Cell;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.model.BigramInfo;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
+import edu.cmu.cs.lti.gigascript.util.GeneralUtils;
 import edu.cmu.cs.lti.gigascript.util.IOUtils;
 import gnu.trove.iterator.TObjectIntIterator;
 import org.apache.commons.lang3.tuple.Triple;
@@ -50,11 +51,11 @@ public class CachedFileStorage extends CacheBasedStorage {
 
         while (iter.hasNext()) {
             iter.advance();
-            writer.write(iter.key().toString());//the key is the tuple, a primary key
+            writer.write(GeneralUtils.triple2Str(iter.key(),","));//the key is the tuple, a primary key
             int tupleId = iter.value();
-            writer.write("\t" + tupleId + "_" + outputFileId);
+            writer.write("\t" + tupleId);
             writer.write("\t" + tupleCount.get(tupleId));
-            writer.write("\t" + tupleEntityTypes.get(tupleId));
+            writer.write("\t" + GeneralUtils.pair2Str(tupleEntityTypes.get(tupleId),"\t"));
             writer.write("\t" + tupleSource.get(tupleId));
             if (writeAddintionalInfo){
                 writer.write("\t");
@@ -66,7 +67,7 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     private void writeBigram(Writer writer) throws IOException {
         for (Cell<Long, Long, BigramInfo> cell : bigramInfoTable.cellSet()) {
-            writer.write(cell.getRowKey() + "," + cell.getColumnKey() + "_" + outputFileId + "\t"); //this pair is the primary key
+            writer.write(cell.getRowKey() + "," + cell.getColumnKey() + "\t"); //this pair is the primary key
             BigramInfo info = cell.getValue();
 
             IOUtils.writeMap(writer, info.getSentenceDistanceCount(), ":", ",");

@@ -12,6 +12,7 @@ import edu.cmu.cs.lti.gigascript.io.GigaDB;
 import edu.cmu.cs.lti.gigascript.io.GigaStorage;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
+import edu.cmu.cs.lti.gigascript.util.GeneralUtils;
 import edu.jhu.agiga.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -34,6 +35,9 @@ import java.util.logging.SimpleFormatter;
  * Time: 6:03 PM
  */
 public class FullSystemRunner {
+    public static final String BLACK_LIST_MODE = "blacklist";
+    public static final String WHITE_LIST_MODE = "whitelist";
+
     public static void main(String[] args) throws IOException, ClassNotFoundException, ConfigurationException {
         String propPath = "settings.properties";
         if (args.length < 1) {
@@ -58,12 +62,12 @@ public class FullSystemRunner {
         boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
 
         //Subset only?
-        boolean doFilter = config.getBoolean("edu.cmu.cs.lti.gigaScript.filter");
+        String filterMode = config.get("edu.cmu.cs.lti.gigaScript.filterMode");
 
         Set<String> docIdsToFilter = new HashSet<String>();
         Set<String> filesToFilter = new HashSet<String>();
 
-        if (doFilter) {
+        if (filterMode.equals(BLACK_LIST_MODE) || filterMode.equals(WHITE_LIST_MODE)) {
             File filterFile = new File(config.get("edu.cmu.cs.lti.gigaScript.filterFile"));
             for (String line : FileUtils.readLines(filterFile, "ascii")) {
                 String docId = line.trim();
@@ -71,7 +75,7 @@ public class FullSystemRunner {
                 String zipName = docId.split("\\.")[0].toLowerCase().substring(0,"nyt_eng_200001".length()) + ".xml.gz";
                 filesToFilter.add(zipName);
             }
-            logger.log(Level.INFO, "Will only produce result for the chosen " + docIdsToFilter.size() + " documents.");
+            logger.log(Level.INFO, "We use the chosen " + docIdsToFilter.size() + " documents as "+filterMode);
         }
 
 
@@ -88,6 +92,8 @@ public class FullSystemRunner {
 
         //Prepare data source
         String corpusPath = config.get("edu.cmu.cs.lti.gigaScript.agiga.dir");
+        //trim the header to reduce storage size
+        String agigaHeader = config.get("edu.cmu.cs.lti.gigaScript.agiga.trimHeader");
 
         logger.log(Level.INFO, "Reading corpus form directory : " + corpusPath);
 
@@ -120,8 +126,10 @@ public class FullSystemRunner {
                 continue;
             }
 
-            if (!filesToFilter.contains(currentFile.getName())) {
-                continue;
+            if (filterMode.equals(WHITE_LIST_MODE)) {
+                if (!filesToFilter.contains(currentFile.getName())) {
+                    continue;
+                }
             }
 
             StreamingDocumentReader reader = new StreamingDocumentReader(currentFile.getAbsolutePath(), new AgigaPrefs());
@@ -130,15 +138,20 @@ public class FullSystemRunner {
             String docId;
             for (AgigaDocument doc : reader) {
                 docId = doc.getDocId();
-                if (doFilter) {
+                if (filterMode.equals(WHITE_LIST_MODE)) {
                     if (!docIdsToFilter.contains(docId)) {
+                        continue;
+                    }
+                    logger.log(Level.FINEST,"Processing whitelisted document: " + docId);
+                }else if (filterMode.equals(BLACK_LIST_MODE)){
+                    logger.log(Level.FINEST,"Ignoring blacklisted document: " + docId);
+                    if (docIdsToFilter.contains(docId)) {
                         continue;
                     }
                 }
 
-                System.out.println("Processing document: " + docId);
-
-                gigaStorage.setAdditionalStr(docId);//currently not used
+//                gigaStorage.setAdditionalStr(docId);//currently not used
+                docId = docId.replaceFirst(agigaHeader,"");
                 processed++;
 
                 AgigaDocumentWrapper docWrapper = new AgigaDocumentWrapper(doc);
@@ -174,11 +187,17 @@ public class FullSystemRunner {
                             AgigaArgument arg0s = createArgument(constituentIndices.get(0), docWrapper, sentenceWrapper, sent);
                             AgigaArgument arg1s = createArgument(constituentIndices.get(2), docWrapper, sentenceWrapper, sent);
 
+                            //two types of relations are output by Clausie, one is generated, which does not have indices
                             String relation;
                             if (constituentIndices.get(1).size() == 0 || constituentIndices.get(1).get(0) < 0) {
                                 relation = p.relation();
                             } else {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
+                            }
+
+                            //sometimes super long relations are generated, not interested in those
+                            if (relation.split(" ").length > 5){
+                                continue;
                             }
 
                             allTuples.add(Triple.of(arg0s, arg1s, relation));
@@ -235,7 +254,7 @@ public class FullSystemRunner {
                     }
                 }
                 if (processed % docNum2Flush == 0) {
-                    System.out.println("Flush for "+docNum2Flush+" documents");
+                    logger.log(Level.FINEST,"Flush for "+docNum2Flush+" documents");
                     gigaStorage.flush();
                 }
                 if (consoleMode) {
@@ -294,6 +313,8 @@ public class FullSystemRunner {
         AgigaArgument argument = new AgigaArgument(sent.getSentIdx(), indices.get(0));
 
         String lemma = AgigaUtil.getLemma(sent, headwordIndex);
+
+        lemma = GeneralUtils.getNiceTupleForm(lemma);
 
         argument.setHeadWordLemma(lemma);
         argument.setEntityType(type);

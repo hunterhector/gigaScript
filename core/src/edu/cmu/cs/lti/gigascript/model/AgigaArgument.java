@@ -31,15 +31,6 @@ public class AgigaArgument {
         this.alternativeForms = new ArrayList<String>();
     }
 
-
-    public int getKeywordTokenIndex() {
-        return keywordTokenIndex;
-    }
-
-    public void setKeywordTokenIndex(int keywordTokenIndex) {
-        this.keywordTokenIndex = keywordTokenIndex;
-    }
-
     public int getSentenceIndex() {
         return sentenceIndex;
     }
