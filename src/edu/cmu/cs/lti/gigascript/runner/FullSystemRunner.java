@@ -50,6 +50,7 @@ public class FullSystemRunner {
 
         Logger rootLogger = Logger.getLogger("edu.cmu.cs.lti");
         FileHandler fh = new FileHandler(config.get("edu.cmu.cs.lti.gigaScript.log"));
+        fh.setLevel(Level.FINE);
         rootLogger.addHandler(fh);
         rootLogger.setUseParentHandlers(false);
 
