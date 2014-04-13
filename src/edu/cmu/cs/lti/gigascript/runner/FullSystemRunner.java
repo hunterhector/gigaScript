@@ -142,10 +142,10 @@ public class FullSystemRunner {
                     if (!docIdsToFilter.contains(docId)) {
                         continue;
                     }
-                    logger.log(Level.FINEST,"Processing whitelisted document: " + docId);
+                    logger.log(Level.FINE,"Processing whitelisted document: " + docId);
                 }else if (filterMode.equals(BLACK_LIST_MODE)){
-                    logger.log(Level.FINEST,"Ignoring blacklisted document: " + docId);
                     if (docIdsToFilter.contains(docId)) {
+                        logger.log(Level.FINE,"Ignoring blacklisted document: " + docId);
                         continue;
                     }
                 }
@@ -197,6 +197,17 @@ public class FullSystemRunner {
 
                             //sometimes super long relations are generated, not interested in those
                             if (relation.split(" ").length > 5){
+                                logger.log(Level.FINE,"Ignoring long relation "+Triple.of(arg0s, arg1s, relation));
+                                continue;
+                            }
+
+                            if(relation.equals("")){
+                                logger.log(Level.FINE,"Ignoring empty relation "+Triple.of(arg0s, arg1s, relation));
+                                continue;
+                            }
+
+                            if(arg0s.getHeadWordLemma().equals("") || arg1s.getHeadWordLemma().equals("")){
+                                logger.log(Level.FINE,"Ignoring empty argument lemma "+Triple.of(arg0s, arg1s, relation));
                                 continue;
                             }
 
