@@ -220,6 +220,8 @@ public class FullSystemRunner {
 //                        e.printStackTrace();
                     } catch (StackOverflowError e) {
                         logger.log(Level.WARNING, String.format("Giving up on StackoverFlow.\n%s", AgigaUtil.getSentenceString(sent)));
+                    } catch (ClassCastException e){
+                        logger.log(Level.WARNING, String.format("Giving up on ClassCastException.\n%s", AgigaUtil.getSentenceString(sent)));
                     }
                 }
 
