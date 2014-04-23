@@ -53,7 +53,7 @@ public class CachedFileStorage extends CacheBasedStorage {
             iter.advance();
             writer.write(GeneralUtils.triple2Str(iter.key(),","));//the key is the tuple, a primary key
             int tupleId = iter.value();
-            writer.write("\t" + tupleId);
+            writer.write("\t" + tupleId+"_"+outputFileId);//so that bigrams can be easily matched here
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t" + GeneralUtils.pair2Str(tupleEntityTypes.get(tupleId),"\t"));
             writer.write("\t" + tupleSource.get(tupleId));
