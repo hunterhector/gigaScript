@@ -196,13 +196,15 @@ public class FullSystemRunner {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
                             }
 
+                            relation = relation.replace("\n"," ");
+
                             //sometimes super long relations are generated, not interested in those
                             if (relation.split(" ").length > 5){
                                 logger.log(Level.FINE,"Ignoring long relation "+Triple.of(arg0s, arg1s, relation));
                                 continue;
                             }
 
-                            if(relation.equals("")){
+                            if(relation.trim().equals("")){
                                 logger.log(Level.FINE,"Ignoring empty relation "+Triple.of(arg0s, arg1s, relation));
                                 continue;
                             }

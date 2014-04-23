@@ -1,11 +1,15 @@
 package edu.cmu.cs.lti.gigascript.lexical;
 
+import edu.cmu.cs.lti.gigascript.util.WordNetUtils;
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
 import edu.mit.jwi.item.*;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,9 +22,10 @@ public class SuperSenseTagger {
     public static void main(String[] args) throws IOException {
         String inputPath = args[0];
         String outputPath = args[1];
-        String wnPath = args[2];///Users/zhengzhongliu/tools/wnDict/
+        String wnPath = args[2];// /Users/zhengzhongliu/tools/wnDict/
+        String semanticTypesPath = args[3]; // semantic_types
 
-        if (args.length > 3){
+        if (args.length > 4){
             upperFormmating = true;
             System.out.println("will use upper formatting");
         }
@@ -45,10 +50,17 @@ public class SuperSenseTagger {
         IDictionary dict = new Dictionary(url);
         dict.open();
 
-        while ((line = br.readLine()) != null) {
-            String[] parts = line.trim().split("\t");
+        //the target semantic types
+        File targetSemanticTypes = new File(semanticTypesPath);
+        Set<String> semanticTypes = new HashSet<String>();
+        for (String semanticType : FileUtils.readLines(targetSemanticTypes)){
+            semanticTypes.add(semanticType.trim());
+        }
 
-            if (parts.length != 5) {
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.trim().split("\t",6);
+
+            if (parts.length < 5) {
                 continue;
             }
 
@@ -57,42 +69,56 @@ public class SuperSenseTagger {
             String arg1Type = parts[3];
             String arg2Type = parts[4];
 
+            String tail = parts[5];
+
             if (tuple.length >= 3) {
                 String arg2 = tuple[tuple.length - 2];
                 String arg1 = tuple[0];
 
                 if (arg1Type.equals("-") || arg1Type.equals("MISC") || arg1Type.equals("O") ||  arg1Type.equals("null")) {
-                    arg1Type = getWordNetSense(arg1, dict);
+                    arg1Type = getWordNetSense(arg1, dict, semanticTypes);
                 }
 
                 if (arg2Type.equals("-") || arg2Type.equals("MISC") || arg1Type.equals("O") ||  arg1Type.equals("null")) {
-                    arg2Type = getWordNetSense(arg2, dict);
+                    arg2Type = getWordNetSense(arg2, dict, semanticTypes);
                 }
 
-                bw.write(String.format("%s\t%s\t%s\t%s\t%s\n", parts[0], parts[1], parts[2], arg1Type, arg2Type));
+                bw.write(String.format("%s\t%s\t%s\t%s\t%s\t%s\n", parts[0], parts[1], parts[2], arg1Type, arg2Type, tail));
             }
         }
         br.close();
         bw.close();
     }
 
-    private static String getWordNetSense(String str, IDictionary dict) {
+    private static String getWordNetSense(String str, IDictionary dict, Set<String> semanticTypes) {
+        int limit = 3;
         try {
             IIndexWord idxWord = dict.getIndexWord(str, POS.NOUN);
             if (idxWord == null) {
                 return "-";
             }
 
-            IWordID wordID = idxWord.getWordIDs().get(0);
-            IWord word = dict.getWord(wordID);
-            ISynset synset = word.getSynset();
-            String LexFileName = synset.getLexicalFile().getName();
-            if (!upperFormmating)
-                return LexFileName.replace("noun.", "_");
-            else
-                return LexFileName.replace("noun.", "").toUpperCase();
+            for (IWordID wordID : idxWord.getWordIDs()) {
+                IWord word = dict.getWord(wordID);
+                ISynset synset = word.getSynset();
+
+                String semanticType = WordNetUtils.getMatchedSemanticTypeBfs(dict, synset, semanticTypes);
+
+                if (!semanticType.equals("-")) {
+                    if (!upperFormmating)
+                        return "_"+semanticType;
+                    else
+                        return semanticType.toUpperCase();
+                }
+                limit --;
+                if (limit == 0){
+                    break;
+                }
+            }
         } catch (Exception e) {
-            return "-";
+            e.printStackTrace();
         }
+
+        return "-";
     }
 }

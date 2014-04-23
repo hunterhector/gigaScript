@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: edu.cmu.cs.lti.gigascript.lexical.SuperSenseTagger
+Main-Class: edu.cmu.cs.lti.gigascript.runner.FullSystemRunner
 

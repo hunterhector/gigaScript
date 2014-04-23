@@ -41,6 +41,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
         outputTupleStoreName = config.get("edu.cmu.cs.lti.gigaScript.tuple.storage.name");
         outputCooccStoreName = config.get("edu.cmu.cs.lti.gigaScript.bigram.storage.name");
         useLowerCase = config.getBoolean("edu.cmu.cs.lti.gigaScript.lowercase");
+        outputFileId = Integer.parseInt(config.getOrElse("edu.cmu.cs.lti.gigaScript.baseFileId","0"));
     }
 
     protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, String relation,String docId) {
