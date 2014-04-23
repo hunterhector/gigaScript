@@ -196,7 +196,8 @@ public class FullSystemRunner {
                                 relation = AgigaUtil.getLemmaForPhrase(sent, constituentIndices.get(1));
                             }
 
-                            relation = relation.replace("\n"," ");
+                            //also make sure relation does not contain comma, tab, new lines
+                            relation = GeneralUtils.getNiceTupleForm(relation);
 
                             //sometimes super long relations are generated, not interested in those
                             if (relation.split(" ").length > 5){

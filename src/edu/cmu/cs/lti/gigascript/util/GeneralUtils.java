@@ -24,8 +24,8 @@ public class GeneralUtils {
      * @return
      */
     public static String replaceSeps(String str){
-        //so, comma and tab, please become space
-        return str.replaceAll(","," ").replaceAll("\\t"," ");
+        //so, comma , tab , newlines , please become space
+        return str.replaceAll(","," ").replaceAll("\\t"," ").replace("\n"," ");
     }
 
     public static String getNiceTupleForm(String str){
