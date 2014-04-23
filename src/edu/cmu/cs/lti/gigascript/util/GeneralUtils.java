@@ -41,7 +41,7 @@ public class GeneralUtils {
     }
 
     public static <T> String getStrRepre(T obj){
-        return obj == null ? "-" : obj.toString();
+        return obj == null ? "-" : obj.toString().trim();
     }
 
     public static void main(String[] argv){

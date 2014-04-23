@@ -324,7 +324,7 @@ public class FullSystemRunner {
     private static AgigaArgument createArgument(List<Integer> indices, AgigaDocumentWrapper docWrapper, AgigaSentenceWrapper sentenceWrapper, AgigaSentence sent) {
         int headwordIndex = sentenceWrapper.getHeadWordIndex(indices);
         AgigaToken headWord = sent.getTokens().get(headwordIndex);
-        String type = docWrapper.getArgumentSemanticType(sent, headWord, indices);
+        String type = docWrapper.getArgumentSemanticType(sent, headWord, indices).trim();
 
         AgigaArgument argument = new AgigaArgument(sent.getSentIdx(), indices.get(0));
 
