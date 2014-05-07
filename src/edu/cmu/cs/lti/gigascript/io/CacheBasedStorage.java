@@ -139,6 +139,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
         tupleEntityTypes.clear();
         bigramInfoTable.clear();
         tupleSource.clear();
+        appossitiveTuples.clear();
         hasNoTuples = true;
     }
 }

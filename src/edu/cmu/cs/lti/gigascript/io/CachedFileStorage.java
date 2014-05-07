@@ -179,6 +179,9 @@ public class CachedFileStorage extends CacheBasedStorage {
                 if (cooccWriter != null) {
                     cooccWriter.close();
                 }
+                if (appWriter!= null){
+                    appWriter.close();
+                }
             } catch (IOException e) {
                 System.err.println("Close writer failure, I recommend you check it! See the log for more detail: " + logPath);
                 e.printStackTrace();
