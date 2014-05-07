@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.gigascript.io;
 
 
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.AgigaRelation;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 
 import java.io.File;
@@ -159,7 +160,7 @@ public class GigaDB extends CacheBasedStorage{
     }
 
     @Override
-    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation, String docId) {
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, AgigaRelation relation, String docId) {
         String arg0Hw = arg0.getHeadWordLemma().replace("'", "''");
         String arg1Hw = arg1.getHeadWordLemma().replace("'", "''");
 
@@ -270,6 +271,10 @@ public class GigaDB extends CacheBasedStorage{
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
         }
+    }
+
+    public void addAppossitiveTuples(AgigaArgument arg0, AgigaArgument arg1, String docId){
+        //not implemented
     }
 
     private Map<String, Integer> getBigramCountsToIncrement(int distance, boolean reverse) {

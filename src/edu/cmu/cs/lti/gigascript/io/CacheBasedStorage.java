@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.gigascript.io;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.AgigaRelation;
 import edu.cmu.cs.lti.gigascript.model.BigramInfo;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import gnu.trove.list.array.TIntArrayList;
@@ -23,10 +24,14 @@ public abstract class CacheBasedStorage extends GigaStorage {
     //All these collections need to be clean periodically!
 
     TObjectIntHashMap<Triple<String, String, String>> tupleIds = new TObjectIntHashMap<Triple<String, String, String>>();
+
+    //the following are indexed by tuple id
     List<Pair<String, String>> tupleEntityTypes = new ArrayList<Pair<String, String>>();
     TIntArrayList tupleCount = new TIntArrayList();
     List<List<String>> tupleSource = new ArrayList<List<String>>();
     Table<Long, Long, BigramInfo> bigramInfoTable = HashBasedTable.create();
+
+    List<Triple<String, String, String>> appossitiveTuples = new ArrayList<Triple<String, String, String>>();
 
     String additionalStr = "";
 
@@ -35,6 +40,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
     int outputFileId = 0;
     String outputTupleStoreName = "Tuples";
     String outputCooccStoreName = "BigramCounts";
+    String outputAppStoreName = "App";
     boolean useLowerCase = true;
 
     public CacheBasedStorage(Configuration config) {
@@ -44,12 +50,24 @@ public abstract class CacheBasedStorage extends GigaStorage {
         outputFileId = Integer.parseInt(config.getOrElse("edu.cmu.cs.lti.gigaScript.baseFileId","0"));
     }
 
-    protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, String relation,String docId) {
+    protected void cacheAppossitiveTuples(AgigaArgument arg0, AgigaArgument arg1, String docId){
+        Triple<String, String, String> tuple;
+        String source = docId+"_"+arg0.getIndexingPair()+"_"+arg1.getIndexingPair();
+        if (useLowerCase) {
+            tuple = Triple.of(arg0.getHeadWordLemma().toLowerCase(), arg1.getHeadWordLemma().toLowerCase(),source);
+        }else{
+            tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(),source);
+        }
+
+        appossitiveTuples.add(tuple);
+    }
+
+    protected long cacheTuple(AgigaArgument arg0, AgigaArgument arg1, AgigaRelation relation,String docId) {
         Triple<String, String, String> tuple;
         if (useLowerCase) {
-            tuple = Triple.of(arg0.getHeadWordLemma().toLowerCase(), arg1.getHeadWordLemma().toLowerCase(), relation.toLowerCase());
+            tuple = Triple.of(arg0.getHeadWordLemma().toLowerCase(), arg1.getHeadWordLemma().toLowerCase(), relation.getRelationStr().toLowerCase());
         }else{
-            tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(), relation);
+            tuple = Triple.of(arg0.getHeadWordLemma(), arg1.getHeadWordLemma(), relation.getRelationStr());
         }
         int tupleId;
 
@@ -70,15 +88,28 @@ public abstract class CacheBasedStorage extends GigaStorage {
             }
         }
 
+        String source = docId+","+arg0.getSentenceIndex()+","+arg0.getKeywordTokenIndex()+","+arg1.getSentenceIndex()+","+arg1.getKeywordTokenIndex();
+
+
         if (newTuple) {
             tupleEntityTypes.add(Pair.of(arg0.getEntityType(), arg1.getEntityType()));
             List<String> newSource = new ArrayList<String>();
-            newSource.add(docId);
+            newSource.add(source);
             tupleSource.add(newSource);
             tupleCount.add(1);
         } else {
             tupleCount.set(tupleId, tupleCount.get(tupleId) + 1);
-            tupleSource.get(tupleId).add(docId);
+            tupleSource.get(tupleId).add(source);
+            Pair<String,String> type = tupleEntityTypes.get(tupleId);
+            String newLeftType = null;
+            String newRightType = null;
+            if (type.getLeft() == null){
+                newLeftType = arg0.getEntityType();
+            }
+            if (type.getRight() == null){
+                newRightType = arg0.getEntityType();
+            }
+            tupleEntityTypes.set(tupleId,Pair.of(newLeftType,newRightType));
         }
 
         return tupleId;

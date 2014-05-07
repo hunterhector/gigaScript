@@ -1,9 +1,6 @@
 package edu.cmu.cs.lti.gigascript.agiga;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
-import edu.cmu.cs.lti.gigascript.model.SemanticType;
 import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -20,21 +17,27 @@ import java.util.Set;
  */
 public class AgigaDocumentWrapper {
     AgigaDocument document;
-    Table<Integer, Integer, SemanticType> typeMapping;
+//    Table<Integer, Integer, SemanticType> typeMapping;
     List<Set<Pair<Integer, Integer>>> corefChains;
     String documentText;
 
     public AgigaDocumentWrapper(AgigaDocument document) {
         this.document = document;
-        typeMapping = HashBasedTable.create();
+//        typeMapping = HashBasedTable.create();
         corefChains = new ArrayList<Set<Pair<Integer, Integer>>>();
 
+        List<AgigaSentence> sentences = document.getSents();
+
         List<AgigaCoref> corefs = document.getCorefs();
-        SemanticType type = new SemanticType();
+//        SemanticType type = new SemanticType();
         for (AgigaCoref coref : corefs) {
             Set<Pair<Integer, Integer>> corefChain = new HashSet<Pair<Integer, Integer>>();
+//            System.out.println("Adding cluster");
             for (AgigaMention mention : coref.getMentions()) {
                 int sentIndex = mention.getSentenceIdx();
+
+//                System.out.println(mention);
+//                System.out.println(sentences.get(mention.getSentenceIdx()).getTokens().get(mention.getHeadTokenIdx()).getWord());
 
                 for (int i = mention.getStartTokenIdx(); i < mention.getEndTokenIdx(); i++) {
                     //This procedure populate the entity type among coreference mentions, which might hurt the performance sometime
@@ -67,8 +70,10 @@ public class AgigaDocumentWrapper {
         if (argument1.equals(argument2)) return true;
         else {
             for (Set<Pair<Integer, Integer>> corefChain : corefChains) {
-                if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair()))
+                if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair())) {
+//                    System.out.println("Contains "+argument1.getIndexingPair() + " "+argument2.getIndexingPair());
                     return true;
+                }
             }
         }
         return false;
@@ -79,12 +84,15 @@ public class AgigaDocumentWrapper {
 
         // trust the token's own Named Entity Tag
         if (!token.getNerTag().equals("O") && !token.getNerTag().equals("")) {
-            return token.getNerTag();
+            return token.getNerTag().trim();
         }
 
+        return null;
+
+        // disable because coreferenced type is too noisy.
         // if the previous one didn't give anything, use the coreferenced type
-        SemanticType type = typeMapping.get(sentence.getSentIdx(), index);
-        return type == null ? null : type.getType();
+//        SemanticType type = typeMapping.get(sentence.getSentIdx(), index);
+//        return type == null ? null : type.getType();
     }
 
     /**
@@ -102,19 +110,6 @@ public class AgigaDocumentWrapper {
 
             //phrase type is too noisy
             return headWordType;
-//            if (headWordType != null) {
-//                return headWordType;
-//            } else {
-//                String phraseSemanticType = null;
-//
-//                for (Integer i : indices) {
-//                    String newType = getSemanticType(sentence, sentence.getTokens().get(i));
-//                    if (newType != null) {
-//                        phraseSemanticType = newType;
-//                    }
-//                }
-//                return phraseSemanticType;
-//            }
         }
     }
 

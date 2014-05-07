@@ -14,10 +14,6 @@ import java.util.List;
 public class AgigaUtil {
     static Joiner spaceJoiner = Joiner.on(" ");
 
-    public static AgigaToken getCorrespondingToken(AgigaSentence sentence, int index){
-        return sentence.getTokens().get(index);
-    }
-
     public static String getSentenceString(AgigaSentence sent){
         return spaceJoiner.join(Lists.transform(sent.getTokens(), new Function<AgigaToken, String>() {
             @Override
@@ -27,8 +23,8 @@ public class AgigaUtil {
         }));
     }
 
-    public static  String getLemma(AgigaSentence sent, int index){
-        return getCorrespondingToken(sent,index).getLemma();
+    public static  String getLemma(AgigaToken token){
+        return token.getLemma();
     }
 
     public static String getLemmaForPhrase(AgigaSentence sent, List<Integer> indices){

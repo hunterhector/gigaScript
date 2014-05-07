@@ -1,12 +1,8 @@
 package edu.cmu.cs.lti.gigascript.model;
 
-import edu.cmu.cs.lti.gigascript.util.Joiners;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,14 +17,9 @@ public class AgigaArgument {
     private String headWordLemma;
     private String entityType;
 
-    // store alternative forms of the argument in order to make generization possible
-    // for example, we could save the entity type of the argument here
-    private List<String> alternativeForms;
-
     public AgigaArgument(int sentenceIndex, int keywordTokenIndex) {
         this.keywordTokenIndex = keywordTokenIndex;
         this.sentenceIndex = sentenceIndex;
-        this.alternativeForms = new ArrayList<String>();
     }
 
     public int getSentenceIndex() {
@@ -39,16 +30,10 @@ public class AgigaArgument {
         this.sentenceIndex = sentenceIndex;
     }
 
-    public List<String> getAlternativeForms() {
-        return alternativeForms;
-    }
-
-    private void addAlternativeForms(String alternativeForm){
-        alternativeForms.add(alternativeForm);
-    }
+    public int getKeywordTokenIndex() { return keywordTokenIndex; }
 
     public Pair<Integer, Integer> getIndexingPair(){
-       return Pair.of(keywordTokenIndex,sentenceIndex);
+       return Pair.of(sentenceIndex,keywordTokenIndex);
     }
 
     public boolean equals(Object obj) {
@@ -60,6 +45,7 @@ public class AgigaArgument {
             return false;
 
         AgigaArgument rhs = (AgigaArgument) obj;
+
         return new EqualsBuilder().append(keywordTokenIndex, rhs.keywordTokenIndex).append(sentenceIndex, rhs.sentenceIndex).isEquals();
     }
 
@@ -69,7 +55,7 @@ public class AgigaArgument {
 
 
     public String toString(){
-        return String.format("[%s]@(%d,%d)",Joiners.commaJoin(alternativeForms),sentenceIndex,keywordTokenIndex);
+        return String.format("[%s]@(%d,%d)",headWordLemma,sentenceIndex,keywordTokenIndex);
     }
 
     public String getEntityType() {
@@ -77,7 +63,6 @@ public class AgigaArgument {
     }
 
     public void setEntityType(String entityType) {
-        addAlternativeForms(entityType);
         this.entityType = entityType;
     }
 
@@ -86,7 +71,6 @@ public class AgigaArgument {
     }
 
     public void setHeadWordLemma(String headWordLemma) {
-        addAlternativeForms(headWordLemma);
         this.headWordLemma = headWordLemma;
     }
 }

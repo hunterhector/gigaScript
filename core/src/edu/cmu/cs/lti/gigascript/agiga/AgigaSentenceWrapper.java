@@ -4,7 +4,6 @@ import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.AgigaToken;
 import edu.jhu.agiga.AgigaTypedDependency;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,15 +40,49 @@ public class AgigaSentenceWrapper {
         return depIdx == -1 ? null : tokens.get(depIdx);
     }
 
+    public List<AgigaToken> getTokens() {
+        return tokens;
+    }
+
     public int getHeadWordIndex(List<Integer> indices) {
+//        if (indices.size() < 2) {
+//            return indices.get(0);
+//        } else {
+//            int headPosition = 0;
+//            int headNode = indices.get(headPosition);
+//
+//            while (headPosition < indices.size()-1) {
+//                if (toDep.containsKey(headNode)) {
+//                    boolean hasParent = false;
+//                    for (int i = 1; i < indices.size(); i++) {
+//                        int node = indices.get(i);
+//                        if (toDep.get(headNode) == node) {
+//                            //update head position
+//                            headPosition = i;
+//                            headNode = toDep.get(headPosition);
+//                            hasParent = true;
+//                            break;
+//                        }
+//                    }
+//                    if (!hasParent){
+//                        return headNode;
+//                    }
+//                } else {
+//                    return headNode;
+//                }
+//            }
+//            return headNode;
+//        }
+
         int firstIndex = indices.get(0);
-        AgigaToken firstToken = tokens.get(firstIndex);
+//        AgigaToken firstToken = tokens.get(firstIndex);
 
-        String pos = firstToken.getPosTag();
+        for (int i =0;i<indices.size();i++) {
+            int index = indices.get(i);
+            String pos = tokens.get(index).getPosTag();
 
-        if (pos.equals("PP") || pos.equals("TO") || pos.equals("IN")){
-            if (toDep.containsKey(firstIndex)){
-                return toDep.get(firstIndex);
+            if (!(pos.equals("PP") || pos.equals("TO") || pos.equals("IN")) || pos.equals("DT")) {
+                return index;
             }
         }
 
@@ -65,7 +98,7 @@ public class AgigaSentenceWrapper {
         return str;
     }
 
-    public String getSentenceLemmaStr(){
+    public String getSentenceLemmaStr() {
         String str = "";
         for (AgigaToken token : tokens) {
             str += token.getLemma();

@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public class WordNetUtils {
     public static String getMatchedSemanticTypeBfs(IDictionary dict, ISynset synset, Set<String> targeSemanticTypes) {
-        LinkedList<ISynset> hyperNyms = getHyperNyms(dict, synset);
+        LinkedList<ISynset> hyperNyms = getHyperNyms(dict, synset,true);
 
         while (!hyperNyms.isEmpty()){
             ISynset hyperNym = hyperNyms.poll();
@@ -27,14 +27,18 @@ public class WordNetUtils {
                     return hyperNymLemma;
                 }
             }
-            hyperNyms.addAll(getHyperNyms(dict,hyperNym));
+            hyperNyms.addAll(getHyperNyms(dict,hyperNym,false));
         }
 
         return "-";
     }
 
-    public static LinkedList<ISynset> getHyperNyms(IDictionary dict, ISynset synset) {
+    public static LinkedList<ISynset> getHyperNyms(IDictionary dict, ISynset synset, boolean includeSelf) {
         LinkedList<ISynset> hyperNyms = new LinkedList<ISynset>();
+        if (includeSelf){
+            hyperNyms.add(synset);
+        }
+
         for (ISynsetID sid : synset.getRelatedSynsets(Pointer.HYPERNYM)) {
             hyperNyms.add(dict.getSynset(sid));
         }

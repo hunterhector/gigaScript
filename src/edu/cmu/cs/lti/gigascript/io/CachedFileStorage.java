@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.gigascript.io;
 
 import com.google.common.collect.Table.Cell;
 import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.AgigaRelation;
 import edu.cmu.cs.lti.gigascript.model.BigramInfo;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.cmu.cs.lti.gigascript.util.GeneralUtils;
@@ -26,24 +27,31 @@ public class CachedFileStorage extends CacheBasedStorage {
 
     String tupleOutputPrefix;
     String bigramOutputPrefix;
+    String appOutptuPrefix;
     boolean writeAddintionalInfo;
 
     public CachedFileStorage(Configuration config) {
         super(config);
         tupleOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.tuple.prefix");
         bigramOutputPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.bigram.prefix");
+        appOutptuPrefix = config.get("edu.cmu.cs.lti.gigaScript.file.app.prefix");
         logPath = config.get("edu.cmu.cs.lti.gigaScript.log");
         writeAddintionalInfo = config.getBoolean("edu.cmu.cs.lti.gigaScript.additionalInfo");
     }
 
     @Override
-    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, String relation, String docId) {
+    public long addGigaTuple(AgigaArgument arg0, AgigaArgument arg1, AgigaRelation relation, String docId) {
         return cacheTuple(arg0, arg1, relation, docId);
     }
 
     @Override
     public void addGigaBigram(long t1, long t2, int sentDistance, int tupleDistance, int[][] equality) {
         cacheBigram(t1, t2, sentDistance, tupleDistance, equality);
+    }
+
+    @Override
+    public void addAppossitiveTuples(AgigaArgument arg0, AgigaArgument arg1, String docId){
+        cacheAppossitiveTuples(arg0,arg1,docId);
     }
 
     private void writeTuple(Writer writer) throws IOException {
@@ -57,11 +65,13 @@ public class CachedFileStorage extends CacheBasedStorage {
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t" + GeneralUtils.pair2Str(tupleEntityTypes.get(tupleId),"\t"));
             writer.write("\t" + tupleSource.get(tupleId));
-            if (writeAddintionalInfo){
-                writer.write("\t");
-                writer.write(additionalStr);
-            }
             writer.write("\n");
+        }
+    }
+
+    private void writeAppossitive(Writer writer) throws IOException{
+        for (Triple<String, String, String> t : appossitiveTuples){
+            writer.write(String.format("%s\t%s\t%s\n",t.getLeft(),t.getMiddle(),t.getRight()));
         }
     }
 
@@ -71,13 +81,9 @@ public class CachedFileStorage extends CacheBasedStorage {
             BigramInfo info = cell.getValue();
 
             IOUtils.writeMap(writer, info.getSentenceDistanceCount(), ":", ",");
-
             writer.write("\t");
-
             IOUtils.writeMap(writer, info.getTupleDistanceCount(), ":", ",");
-
             writer.write("\t");
-
             IOUtils.writeList(writer, info.getTupleEqualityCount(), ",");
 
             if (writeAddintionalInfo){
@@ -98,13 +104,16 @@ public class CachedFileStorage extends CacheBasedStorage {
 //        System.out.println("\nBegin flushing");
         Writer tupleWriter = null;
         Writer cooccWriter = null;
+        Writer appWriter = null;
 
         File tupleOutputFile = new File(tupleOutputPrefix + outputTupleStoreName + outputFileId);
         File cooccOutputFile = new File(bigramOutputPrefix + outputCooccStoreName + outputFileId);
+        File appOutputFile = new File(appOutptuPrefix + outputAppStoreName + outputFileId);
 
         //make sure directory exists
         File tupleOutputDir = tupleOutputFile.getParentFile();
         File cooccOutputDir = cooccOutputFile.getParentFile();
+        File appOutputDir = appOutputFile.getParentFile();
 
         try {
             if (!tupleOutputDir.exists()) {
@@ -123,6 +132,14 @@ public class CachedFileStorage extends CacheBasedStorage {
                 }
             }
 
+            if (!appOutputDir.exists()){
+                if (!appOutputDir.mkdirs()){
+                    System.err.println("Cannot create directory to store appositives on :" + appOutputDir.getCanonicalPath());
+                }else{
+                    System.out.println("Created directory to write appositives");
+                }
+            }
+
             if (tupleOutputDir.exists() && tupleOutputDir.isFile()) {
                 System.err.println("Target direcotry is a file :" + tupleOutputDir.getCanonicalPath());
             }
@@ -130,6 +147,11 @@ public class CachedFileStorage extends CacheBasedStorage {
             if (cooccOutputDir.exists() && cooccOutputDir.isFile()) {
                 System.err.println("Target direcotry is a file :" + cooccOutputDir.getCanonicalPath());
             }
+
+            if (appOutputDir.exists() && appOutputDir.isFile()){
+                System.err.println("Target direcotry is a file :" + appOutputDir.getCanonicalPath());
+            }
+
         } catch (IOException ex) {
             System.err.println("Create directory file failure, I recommend you check it! See the log for more detail: " + logPath);
             logger.log(Level.SEVERE, ex.getMessage(), ex);
@@ -140,9 +162,11 @@ public class CachedFileStorage extends CacheBasedStorage {
             tupleWriter = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(tupleOutputFile)));
             cooccWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cooccOutputFile)));
+            appWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appOutputFile)));
 
             writeTuple(tupleWriter);
             writeBigram(cooccWriter);
+            writeAppossitive(appWriter);
         } catch (IOException ex) {
             System.err.println("Write file failure, I recommend you check it! See the log for more detail: " + logPath);
             logger.log(Level.SEVERE, ex.getMessage(), ex);
@@ -162,7 +186,5 @@ public class CachedFileStorage extends CacheBasedStorage {
         // clear memory
         super.flush();
         outputFileId++;
-
-//        System.out.println("\nEnd flushing");
     }
 }

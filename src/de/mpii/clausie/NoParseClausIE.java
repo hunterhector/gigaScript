@@ -51,7 +51,7 @@ public class NoParseClausIE extends ClausIE {
 
         OutputStream out = System.out;
 
-        FileOutputStream errorOutStream = new FileOutputStream(new File("error.log"));
+        FileOutputStream errorOutStream = new FileOutputStream(new File("no_parse_clausie_error.log"));
 
         PrintStream dout = new PrintStream(out);
 
