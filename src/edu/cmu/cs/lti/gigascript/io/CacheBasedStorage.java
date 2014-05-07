@@ -52,7 +52,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
 
     protected void cacheAppossitiveTuples(AgigaArgument arg0, AgigaArgument arg1, String docId){
         Triple<String, String, String> tuple;
-        String source = docId+"_"+arg0.getIndexingPair()+"_"+arg1.getIndexingPair();
+        String source = docId+"_"+arg0.getSentenceIndex()+","+arg0.getKeywordTokenIndex()+","+arg1.getKeywordTokenIndex();
         if (useLowerCase) {
             tuple = Triple.of(arg0.getHeadWordLemma().toLowerCase(), arg1.getHeadWordLemma().toLowerCase(),source);
         }else{
@@ -88,7 +88,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
             }
         }
 
-        String source = docId+","+arg0.getSentenceIndex()+","+arg0.getKeywordTokenIndex()+","+arg1.getSentenceIndex()+","+arg1.getKeywordTokenIndex();
+        String source = docId+","+arg0.getSentenceIndex()+","+arg0.getKeywordTokenIndex()+","+arg1.getKeywordTokenIndex();
 
 
         if (newTuple) {

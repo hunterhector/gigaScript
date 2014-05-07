@@ -7,6 +7,7 @@ import edu.cmu.cs.lti.gigascript.model.BigramInfo;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import edu.cmu.cs.lti.gigascript.util.GeneralUtils;
 import edu.cmu.cs.lti.gigascript.util.IOUtils;
+import edu.cmu.cs.lti.gigascript.util.Joiners;
 import gnu.trove.iterator.TObjectIntIterator;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -64,7 +65,7 @@ public class CachedFileStorage extends CacheBasedStorage {
             writer.write("\t" + tupleId+"_"+outputFileId);//so that bigrams can be easily matched here
             writer.write("\t" + tupleCount.get(tupleId));
             writer.write("\t" + GeneralUtils.pair2Str(tupleEntityTypes.get(tupleId),"\t"));
-            writer.write("\t" + tupleSource.get(tupleId));
+            writer.write("\t" + Joiners.colonJoin(tupleSource.get(tupleId)));
             writer.write("\n");
         }
     }

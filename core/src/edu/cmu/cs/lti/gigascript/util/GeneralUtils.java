@@ -104,7 +104,7 @@ public class GeneralUtils {
             return false;
         }
 
-        if (headword2Pos.startsWith("V")|| headword2Pos.startsWith("J") || headword2Pos.startsWith("R") || headword2Pos.startsWith("W")) {
+        if (headword2Pos.startsWith("V") || headword2Pos.startsWith("W")) {
 //            System.out.println("incorrect pos 2 "+tuple+" "+headword2Pos);
             return false;
         }

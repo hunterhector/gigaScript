@@ -16,11 +16,13 @@ public class Joiners {
 
     private static final Joiner tabJoiner = Joiner.on("\t");
 
+    private static final Joiner colonJoiner = Joiner.on(":");
 
     public static String spaceJoin(Iterable<?> parts){
         return spaceJoiner.join(parts);
     }
 
+    public static String colonJoin(Iterable<?> parts) {return colonJoiner.join(parts);}
 
     public static String commaJoin(Iterable<?> parts){
         return commaJoiner.join(parts);
