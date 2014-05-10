@@ -3,10 +3,10 @@ package edu.cmu.cs.lti.gigascript.agiga;
 import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.AgigaToken;
 import edu.jhu.agiga.AgigaTypedDependency;
+import edu.stanford.nlp.trees.SemanticHeadFinder;
+import edu.stanford.nlp.trees.Tree;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,29 +16,60 @@ import java.util.Map;
  */
 public class AgigaSentenceWrapper {
     List<AgigaTypedDependency> basicDependencies;
-    Map<Integer, Integer> toGov = new HashMap<Integer, Integer>();
-    Map<Integer, Integer> toDep = new HashMap<Integer, Integer>();
+//    Map<Integer, Integer> toGov = new HashMap<Integer, Integer>();
+//    Map<Integer, Integer> toDep = new HashMap<Integer, Integer>();
     List<AgigaToken> tokens;
+    AgigaSentence sent;
+    SemanticHeadFinder headFinder = new SemanticHeadFinder();
+    Tree parseTree;
 
     public AgigaSentenceWrapper(AgigaSentence sentence) {
-        basicDependencies = sentence.getBasicDeps();
+//        basicDependencies = sentence.getBasicDeps();
         tokens = sentence.getTokens();
+        sent = sentence;
 
-        for (AgigaTypedDependency dep : basicDependencies) {
-            toGov.put(dep.getDepIdx(), dep.getGovIdx());
-            toDep.put(dep.getGovIdx(), dep.getDepIdx());
-        }
+        parseTree = sent.getStanfordContituencyTree();
+//        System.out.println(parseTree.headTerminal(headFinder).nodeString());
+//        System.out.println(parseTree.headTerminal(headFinder).label());
+
+//        for (AgigaTypedDependency dep : basicDependencies) {
+//            toGov.put(dep.getDepIdx(), dep.getGovIdx());
+//            toDep.put(dep.getGovIdx(), dep.getDepIdx());
+//        }
     }
 
-    private AgigaToken toGov(AgigaToken token) {
-        int govIdx = toGov.get(token.getTokIdx());
-        return govIdx == -1 ? null : tokens.get(govIdx);
-    }
+//    public void dfs(Tree node, Tree parent) {
+//        if (node == null || node.isLeaf()) {
+//            return;
+//        }
+//        //if node is a NP - Get the terminal nodes to get the words in the NP
+//        if(node.value().equals("NP") ) {
+//            System.out.println(" Noun Phrase is ");
+//            List<Tree> leaves = node.getLeaves();
+//
+//            for(Tree leaf : leaves) {
+//                System.out.print(leaf.toString()+" ");
+//            }
+//            System.out.println();
+//
+//            System.out.println(" Head string is ");
+//            System.out.println(node.headTerminal(headFinder, parent));
+//        }
+//
+//        for(Tree child : node.children()) {
+//            dfs(child, node);
+//        }
+//    }
 
-    private AgigaToken toDep(AgigaToken token) {
-        int depIdx = toDep.get(token.getTokIdx());
-        return depIdx == -1 ? null : tokens.get(depIdx);
-    }
+//    private AgigaToken toGov(AgigaToken token) {
+//        int govIdx = toGov.get(token.getTokIdx());
+//        return govIdx == -1 ? null : tokens.get(govIdx);
+//    }
+//
+//    private AgigaToken toDep(AgigaToken token) {
+//        int depIdx = toDep.get(token.getTokIdx());
+//        return depIdx == -1 ? null : tokens.get(depIdx);
+//    }
 
     public List<AgigaToken> getTokens() {
         return tokens;
@@ -106,4 +137,5 @@ public class AgigaSentenceWrapper {
         }
         return str;
     }
+
 }

@@ -14,8 +14,10 @@ import java.io.IOException;
 public class ClausieDemo {
     public static void main(String[] argv) throws IOException {
         ClausIE cie = new ClausIE();
-        cie.parse(" U.S. , Canada and the Pacific : CONNIE WHITE in Kansas City " +
-                "at 1-800-444-0267 or 816-822-8448 , or fax her at 816-822-1444 .");
+        cie.parse("\"In this border town , once a gracious spa favored by Rwanda 's rich and powerful ," +
+                " hundreds of weary and dirty families were camped on Saturday , waiting" +
+                " until they can cross the border , hoping to flee the country before the arrival of rebel" +
+                " troops , who are only 10 miles away .\n");
 
         cie.detectClauses();
         cie.generatePropositions();

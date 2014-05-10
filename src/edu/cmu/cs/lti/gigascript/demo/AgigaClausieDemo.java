@@ -10,6 +10,8 @@ import edu.jhu.agiga.AgigaDocument;
 import edu.jhu.agiga.AgigaPrefs;
 import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.StreamingDocumentReader;
+import edu.stanford.nlp.trees.SemanticHeadFinder;
+import edu.stanford.nlp.trees.Tree;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,7 +40,7 @@ public class AgigaClausieDemo {
         FileOutputStream sentenceOut = new FileOutputStream(new File("sentences.txt"));
         PrintStream out = new PrintStream(sentenceOut);
 
-        File folder = new File(System.getProperty("user.home") + "/Downloads/agiga_sample_1");
+        File folder = new File(System.getProperty("user.home") + "/Downloads/agiga_sample");
 
         File[] listOfFiles = folder.listFiles();
 
@@ -58,8 +60,16 @@ public class AgigaClausieDemo {
                 for (AgigaSentence sent : doc.getSents()) {
                     IOUtils.printSentence(sent, out);
                     try {
-
                         AgigaSentenceWrapper wrapper = new AgigaSentenceWrapper(sent);
+
+                        System.out.println("Sentence is "+wrapper.getSentenceStr());
+
+                        System.out.println("Head node is ");
+                        Tree tree = sent.getStanfordContituencyTree();
+                        SemanticHeadFinder headFinder = new SemanticHeadFinder();
+                        System.out.println(tree.headTerminal(headFinder).nodeString());
+                        System.out.println(tree.headTerminal(headFinder).label());
+
 
                         npClauseIe.readParse(sent);
                         npClauseIe.detectClauses();

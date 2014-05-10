@@ -30,7 +30,7 @@ public class AgigaRelation {
 
     public AgigaRelation(AgigaSentence sent,List<Integer> indices){
         this.indices = indices;
-        relationStr =  GeneralUtils.getNiceTupleForm(AgigaUtil.getLemmaForPhrase(sent, indices));
+        relationStr =  GeneralUtils.getNiceTupleForm(AgigaUtil.getShortenLemmaForPhrase(sent, indices));
         relationType = NORMAL_TYPE;
         keywordLemma = AgigaUtil.getLemma(sent.getTokens().get(indices.get(0)));
     }

@@ -139,6 +139,7 @@ public class FullSystemRunner {
 
             String docId;
             for (AgigaDocument doc : reader) {
+                System.out.println("Start Processing Archive" + doc.getDocId());
                 docId = doc.getDocId();
 
                 if (filterMode.equals(WHITE_LIST_MODE)) {

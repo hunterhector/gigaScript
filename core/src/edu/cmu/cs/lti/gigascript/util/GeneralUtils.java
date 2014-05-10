@@ -18,7 +18,10 @@ public class GeneralUtils {
 
     private static Set<String> relationBlackList = new HashSet<String>(Arrays.asList("be", "is",
             "was", "were", "are", "has", "have", "had", "be not", "is not", "was not", "were not",
-            "are not", "has not", "have not", "had not", "to be", "to have","there be"));
+            "are not", "has not", "have not", "had not", "to be", "to have","there be",
+            "can","cannot","could","couldn't", "dare", "may", "might", "must", "need",
+            "ought", "shall", "should", "shouldn't","will", "would"));
+
 
     private static Set<String> actorBlackList =  new HashSet<String>(Arrays.asList("IN","TO","PP","MD",
             "POS","PDT","SYM","UH","CC","DT"));
@@ -99,7 +102,7 @@ public class GeneralUtils {
         }
 
 
-        if (headword1Pos.startsWith("V") || headword1Pos.startsWith("J") || headword1Pos.startsWith("R") || headword1Pos.startsWith("W")) {
+        if (headword1Pos.startsWith("V") || headword1Pos.equals("JJ") || headword1Pos.startsWith("R") || headword1Pos.startsWith("W")) {
 //            System.out.println("incorrect pos 1 "+tuple+" "+headword1Pos);
             return false;
         }
