@@ -47,7 +47,6 @@ public class GraphMaker {
 
         System.out.println("Building the full graph");
         ArcLabelledImmutableGraph graph = GraphUtils.buildWeightedGraphFromFile(edgeFile, nodeNumber,arcNumber,nodeBase, edgeSorted);
-
         GraphUtils.storeWeightedGraph(graph, storePath, graphName);
     }
 }
