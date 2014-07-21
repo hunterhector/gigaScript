@@ -11,6 +11,7 @@ import it.unimi.dsi.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
 import it.unimi.dsi.webgraph.labelling.Label;
 import it.unimi.dsi.webgraph.labelling.LabelMergeStrategy;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.*;
@@ -178,5 +179,17 @@ public class GraphUtils {
         return Transform.transposeOffline(g, batchSize);
     }
 
+    public static List<Pair<Integer,Double>> getArcFromFile(int src, File graphDir) throws IOException {
+        File arcFile = FileUtils.getFile(graphDir, Integer.toString(src));
+
+        List<Pair<Integer,Double>> successors = new ArrayList<Pair<Integer, Double>>();
+
+        for (String line : FileUtils.readLines(arcFile)){
+            String[] fields = line.split(" ");
+            successors.add(Pair.of(Integer.parseInt(fields[1]),Double.parseDouble(fields[2])));
+        }
+
+        return successors;
+    }
 
 }

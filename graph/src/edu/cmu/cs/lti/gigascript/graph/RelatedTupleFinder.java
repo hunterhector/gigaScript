@@ -28,7 +28,6 @@ public class RelatedTupleFinder {
     private WeightedPageRankWrapper findRelatedTuples(ArcLabelledImmutableGraph graph, Set<Integer> targetNodes) throws IOException {
         System.out.println("Building the subgraph.");
         subgraph = new ArcLabelledSubGraph(graph, targetNodes, 1, true);
-//        List<Triple<Integer, Integer, Float>> arcList = subgraph.getArcList();
         List<Triple<Integer, Integer, Float>> arcList = subgraph.getSymmetricArcList();
         ArcLabelledImmutableGraph subGraphAsGraph = GraphUtils.buildWeightedGraphFromTriples(arcList);
         System.out.println("Number of nodes in subgraph "+subGraphAsGraph.numNodes());
@@ -87,16 +86,16 @@ public class RelatedTupleFinder {
 
         String expandedTuplePath = config.get("edu.cmu.cs.lti.gigaScript.graph.node.map.expand.path");
         String originTuplePath = config.get("edu.cmu.cs.lti.gigaScript.graph.node.map.origin.path");
-        int offset = config.getInt("edu.cmu.cs.lti.gigaScript.graph.node.base"); //78195158;
+        int offset = config.getInt("edu.cmu.cs.lti.gigaScript.graph.node.base");
+        int largets = config.getInt("edu.cmu.cs.lti.gigaScript.graph.node.largest");
+        int numNodes = largets - offset;
 
-        String storePath = config.get("edu.cmu.cs.lti.gigaScript.graph.base.dir");
-        String graphName = config.get("edu.cmu.cs.lti.gigaScript.graph.name");
+        String splittedGraphPath = config.get("edu.cmu.cs.lti.gigaScript.graph.splited");
 
         String outputPath = config.get("edu.cmu.cs.lti.gigaScript.graph.script.outpath");
 
-        ArcLabelledImmutableGraph graph = GraphUtils.loadAsArcLablelled(storePath, graphName, false);
+        ArcLabelledImmutableGraph graph = new FileBasedGraph(new File(splittedGraphPath),numNodes);
 
-        Joiner linebreakJoiner = Joiner.on("\n");
         Joiner commaJoiner = Joiner.on(" , ");
 
         TIntObjectHashMap<String> expandedHostMap = HostMap.loadFromIdMap(new File(expandedTuplePath));
