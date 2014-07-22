@@ -41,10 +41,11 @@ public class FileBasedGraph extends ArcLabelledImmutableGraph{
     private List<WeightedArc> outArcList;
 
     public FileBasedGraph(File graphDir, int numNodes) throws IOException {
+        System.out.println("Creating a graph with "+numNodes +" nodes");
+
         this.graphDir = graphDir;
         this.prototype = new FixedWidthFloatLabel("FOO");
         this.numNodes = numNodes;
-
 
         if (!graphDir.exists() && !graphDir.isDirectory()){
             throw new IllegalArgumentException("Provided directory does not exist "+graphDir.getCanonicalPath());
@@ -52,6 +53,10 @@ public class FileBasedGraph extends ArcLabelledImmutableGraph{
     }
 
     private void toNode(int node) {
+        if (node >= numNodes){
+            throw new IllegalArgumentException(String.format("Cannot access node %d, over graph size %d",node,numNodes));
+        }
+
         if (currentNode == node){
             return;
         }
@@ -77,12 +82,10 @@ public class FileBasedGraph extends ArcLabelledImmutableGraph{
 
     private final class ArcIterator extends AbstractLazyIntIterator implements ArcLabelledNodeIterator.LabelledArcIterator {
         private final FixedWidthFloatLabel label;
-        private final int from;
         private int pos = -1; //position of the pointer in the arc list
 
         private ArcIterator(FixedWidthFloatLabel label, int from) {
             this.label = label;
-            this.from = from;
             toNode(from);
         }
 
@@ -94,7 +97,7 @@ public class FileBasedGraph extends ArcLabelledImmutableGraph{
         public int nextInt() {
             pos ++;
             if (pos >= outArcList.size()) return -1;
-            return (int) (outArcList.get(pos).dest);
+            return outArcList.get(pos).dest;
         }
     }
 

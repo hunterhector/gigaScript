@@ -88,6 +88,7 @@ public abstract class CacheBasedStorage extends GigaStorage {
             }
         }
 
+        //the source is comprosed of the sentence index, then the argument indices
         String source = docId+","+arg0.getSentenceIndex()+","+arg0.getKeywordTokenIndex()+","+arg1.getKeywordTokenIndex();
 
 

@@ -64,16 +64,16 @@ public class GraphUtils {
             try {
                 weightedArcs[lineno] = new WeightedArc(line, offset);
             } catch (NumberFormatException e) {
-                System.err.println("Wrong formatted line: "+line);
+                System.err.println("Wrong formatted line: " + line);
             }
             lineno++;
 
-            if (lineno % 10000000 == 0){
-                System.out.println(String.format("Processed %d lines",lineno));
+            if (lineno % 10000000 == 0) {
+                System.out.println(String.format("Processed %d lines", lineno));
             }
         }
 
-        return  new WeightedBVGraph(weightedArcs, numNodes, sorted);
+        return new WeightedBVGraph(weightedArcs, numNodes, sorted);
     }
 
     /**
@@ -87,7 +87,7 @@ public class GraphUtils {
         WeightedArc[] weightedArcArray = new WeightedArc[triples.size()];
 
         for (int i = 0; i < triples.size(); i++) {
-            Triple<Integer, Integer, Float>  triple = triples.get(i);
+            Triple<Integer, Integer, Float> triple = triples.get(i);
             weightedArcArray[i] = new WeightedArc(triple.getLeft(), triple.getMiddle(), triple.getRight());
         }
 
@@ -107,8 +107,8 @@ public class GraphUtils {
         WeightedArc[] weightedArcArray = new WeightedArc[triples.size()];
 
         for (int i = 0; i < triples.size(); i++) {
-            Triple<Integer, Integer, Float>  triple = triples.get(i);
-            weightedArcArray[i] = new WeightedArc(triple.getLeft()-offset, triple.getMiddle()-offset, triple.getRight());
+            Triple<Integer, Integer, Float> triple = triples.get(i);
+            weightedArcArray[i] = new WeightedArc(triple.getLeft() - offset, triple.getMiddle() - offset, triple.getRight());
         }
 
         ArcLabelledImmutableGraph aig = new WeightedBVGraph(weightedArcArray);
@@ -117,18 +117,18 @@ public class GraphUtils {
     }
 
     public static void storeWeightedGraph(ArcLabelledImmutableGraph g, String path, String basename) throws IOException {
-        String fullPath = path+basename;
-        System.err.println("Storing weighted graph to "+fullPath);
+        String fullPath = path + basename;
+        System.err.println("Storing weighted graph to " + fullPath);
         System.err.println("Storing labels");
-        BitStreamArcLabelledImmutableGraph.store(g,fullPath,basename+ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
+        BitStreamArcLabelledImmutableGraph.store(g, fullPath, basename + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
         System.err.println("Compressing graph");
-        BVGraph.store(g,fullPath+ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
+        BVGraph.store(g, fullPath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
         System.err.println("Graph stored.");
     }
 
     public static BVGraph loadBVGraph(String path, String basename) throws IOException {
         String fullPath = path + basename;
-        System.err.println("Loading the Graph from "+fullPath);
+        System.err.println("Loading the Graph from " + fullPath);
         BVGraph g = BVGraph.load(fullPath);
         return g;
     }
@@ -141,15 +141,15 @@ public class GraphUtils {
         return g;
     }
 
-    public static String[] ToTuple(int[] ids, int offset, TIntObjectHashMap<String> fromIdMap){
+    public static String[] toTuple(int[] ids, int offset, TIntObjectHashMap<String> fromIdMap) {
         String[] tuples = new String[ids.length];
 
-        for (int i = 0 ; i< ids.length;i ++){
+        for (int i = 0; i < ids.length; i++) {
             int id = ids[i];
-            if (fromIdMap.containsKey(id)) {
+            if (fromIdMap.containsKey(id+offset)) {
                 tuples[i] = fromIdMap.get(id + offset);
-            }else{
-                tuples[i] = "["+id+"]";
+            } else {
+                tuples[i] = "[" + id + "]";
             }
         }
 
@@ -157,36 +157,38 @@ public class GraphUtils {
     }
 
     public static ArcLabelledImmutableGraph getSymmetricGraph(ArcLabelledImmutableGraph g) throws IOException {
-        return Transform.union(g,transpose(g,1000000),new LabelMergeStrategy() {
+        return Transform.union(g, transpose(g, 1000000), new LabelMergeStrategy() {
             @Override
             public Label merge(Label first, Label second) {
                 if (first.wellKnownAttributeKey().equals(second.wellKnownAttributeKey())) {
                     String key = first.wellKnownAttributeKey();
-                    return new FixedWidthFloatLabel(key, first.getFloat(key)*second.getFloat(key));
-                }else{
+                    return new FixedWidthFloatLabel(key, first.getFloat(key) * second.getFloat(key));
+                } else {
                     throw new IllegalArgumentException("Key are different!");
                 }
             }
         });
     }
+
     /**
      * Get the transpose graph of a labelled graph
-     * @param g The input graph
+     *
+     * @param g         The input graph
      * @param batchSize Number of nodes to be loaded into memory at one time.
      * @return
      */
-    public static ArcLabelledImmutableGraph transpose(ArcLabelledImmutableGraph g,int batchSize) throws IOException {
+    public static ArcLabelledImmutableGraph transpose(ArcLabelledImmutableGraph g, int batchSize) throws IOException {
         return Transform.transposeOffline(g, batchSize);
     }
 
-    public static List<Pair<Integer,Double>> getArcFromFile(int src, File graphDir) throws IOException {
+    public static List<Pair<Integer, Double>> getArcFromFile(int src, File graphDir) throws IOException {
         File arcFile = FileUtils.getFile(graphDir, Integer.toString(src));
 
-        List<Pair<Integer,Double>> successors = new ArrayList<Pair<Integer, Double>>();
+        List<Pair<Integer, Double>> successors = new ArrayList<Pair<Integer, Double>>();
 
-        for (String line : FileUtils.readLines(arcFile)){
+        for (String line : FileUtils.readLines(arcFile)) {
             String[] fields = line.split(" ");
-            successors.add(Pair.of(Integer.parseInt(fields[1]),Double.parseDouble(fields[2])));
+            successors.add(Pair.of(Integer.parseInt(fields[1]), Double.parseDouble(fields[2])));
         }
 
         return successors;
