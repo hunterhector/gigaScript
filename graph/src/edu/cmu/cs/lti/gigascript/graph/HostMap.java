@@ -1,6 +1,5 @@
 package edu.cmu.cs.lti.gigascript.graph;
 
-import edu.cmu.cs.lti.gigascript.model.TupleInfo;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -83,18 +82,18 @@ public class HostMap {
      * @return
      * @throws IOException
      */
-    public static TIntObjectHashMap<TupleInfo> loadOriginalTupleInfo(File originalTupleFile) throws IOException {
+    public static TIntObjectHashMap<String> loadOriginalTupleInfo(File originalTupleFile) throws IOException {
         System.out.println("Reading orginal tuple information");
 
         FileReader file = new FileReader(originalTupleFile);
         BufferedReader br = new BufferedReader(file);
 
-        TIntObjectHashMap<TupleInfo> tupleInfo = new TIntObjectHashMap<TupleInfo>();
+        TIntObjectHashMap<String> tupleInfo = new TIntObjectHashMap<String>();
 
         String line;
         while ((line = br.readLine()) != null) {
-            TupleInfo info = new TupleInfo(line);
-            tupleInfo.put(info.getTupleId(),info);
+            String[] fields = line.split("\t");
+            tupleInfo.put(Integer.parseInt(fields[1]), line);
         }
 
         System.out.println("Done");

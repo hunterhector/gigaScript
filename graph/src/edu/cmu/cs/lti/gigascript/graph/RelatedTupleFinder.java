@@ -2,6 +2,7 @@ package edu.cmu.cs.lti.gigascript.graph;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
+import edu.cmu.cs.lti.gigascript.model.TupleAddress;
 import edu.cmu.cs.lti.gigascript.model.TupleInfo;
 import edu.cmu.cs.lti.gigascript.util.Configuration;
 import es.yrbcn.graph.weighted.WeightedPageRank;
@@ -65,23 +66,27 @@ public class RelatedTupleFinder {
         return originIndices;
     }
 
-    private TupleInfo[] getSupportingTuples(int expandedIndex, TIntObjectHashMap<int[]> supportMap, TIntObjectHashMap<TupleInfo> originHostMap) {
+    private TupleInfo[] getSupportingTuples(int expandedIndex, TIntObjectHashMap<int[]> supportMap, TIntObjectHashMap<String> originHostMap) {
         int[] supportId = supportMap.get(expandedIndex);
         TupleInfo[] supportTuples = new TupleInfo[supportId.length];
         for (int i = 0; i < supportId.length; i++) {
-            supportTuples[i] = originHostMap.get(supportId[i]);
+            supportTuples[i] = new TupleInfo(originHostMap.get(supportId[i]));
         }
         return supportTuples;
     }
 
-    private ArrayListMultimap<Integer, TupleInfo> gatherInstances(int targetIndex, int[] resultExpandedIndices, TIntObjectHashMap<int[]> supportMap, TIntObjectHashMap<TupleInfo> originHostMap) {
-        System.out.println("Gathering related tuples for "+targetIndex);
+    private ArrayListMultimap<Integer, TupleInfo> gatherInstances(int targetIndex, int[] resultExpandedIndices, TIntObjectHashMap<int[]> supportMap, TIntObjectHashMap<String> originHostMap) {
+        System.out.println("Gathering related tuples for " + targetIndex);
 
         Set<String> targetDocuments = new HashSet<String>();
 
-        for (TupleInfo.TupleAddress address : originHostMap.get(targetIndex).getAddresses()) {
+        String originLine = originHostMap.get(targetIndex);
+        TupleInfo originTuple = new TupleInfo(originLine);
+
+        for (String addressStr : originTuple.getAddresses()) {
+            TupleAddress address = new TupleAddress(addressStr);
             targetDocuments.add(address.fileAddress);
-            System.out.println("Gathering starts from document : "+address.fileAddress);
+            System.out.println("Gathering starts from document : " + address.fileAddress);
         }
 
         Set<TupleInfo> rawResults = new HashSet<TupleInfo>();
@@ -92,25 +97,25 @@ public class RelatedTupleFinder {
             TupleInfo[] supportingTuples = getSupportingTuples(resultExpandedIndex, supportMap, originHostMap);
             rawResults.addAll(Arrays.asList(supportingTuples));
 
-            for (TupleInfo t : supportingTuples){
-                if (tuple2ExpandedView.containsKey(t)){
-                    if (supportMap.get(tuple2ExpandedView.get(t)).length < supportMap.get(resultExpandedIndex).length){
+            for (TupleInfo t : supportingTuples) {
+                if (tuple2ExpandedView.containsKey(t)) {
+                    if (supportMap.get(tuple2ExpandedView.get(t)).length < supportMap.get(resultExpandedIndex).length) {
                         tuple2ExpandedView.put(t, resultExpandedIndex);
                     }
-                }else {
+                } else {
                     tuple2ExpandedView.put(t, resultExpandedIndex);
                 }
             }
         }
-        Set<TupleInfo> closureTuples = getDocumentTransitiveClosureOnTuples(rawResults,targetDocuments);
+//        Set<TupleInfo> closureTuples = getDocumentTransitiveClosureOnTuples(rawResults, targetDocuments);
+//
+//        System.out.println("Number of tuples in unfiltered set: " + rawResults.size());
+//        System.out.println("Number of tuples in closure set: " + closureTuples.size());
 
-        System.out.println("Number of tuples in unfiltered set: "+rawResults.size());
-        System.out.println("Number of tuples in closure set: "+closureTuples.size());
+        ArrayListMultimap<Integer, TupleInfo> gatheredTuples = ArrayListMultimap.create();
 
-        ArrayListMultimap<Integer,TupleInfo> gatheredTuples =  ArrayListMultimap.create();
-
-        for (TupleInfo closureTuple : closureTuples){
-                gatheredTuples.put(tuple2ExpandedView.get(closureTuple),closureTuple);
+        for (TupleInfo closureTuple : rawResults) {
+            gatheredTuples.put(tuple2ExpandedView.get(closureTuple), closureTuple);
         }
 
         return gatheredTuples;
@@ -124,23 +129,25 @@ public class RelatedTupleFinder {
 
         Set<TupleInfo> closureSet = new HashSet<TupleInfo>();
 
-        while(hasNewInstances) {
+        while (hasNewInstances) {
             hasNewInstances = false;
-            for (Iterator<TupleInfo> iter = tupleSet.iterator(); iter.hasNext();) {
+            for (Iterator<TupleInfo> iter = tupleSet.iterator(); iter.hasNext(); ) {
                 TupleInfo tupleInfo = iter.next();
                 boolean isRelated = false;
-                for (TupleInfo.TupleAddress tupleAddress : tupleInfo.getAddresses()) {
-                    if (addressSet.contains(tupleAddress.fileAddress)) {
+                for (String tupleAddressStr : tupleInfo.getAddresses()) {
+                    TupleAddress address = new TupleAddress(tupleAddressStr);
+                    if (addressSet.contains(address)) {
                         isRelated = true;
                         break;
-                    }else{
-                        System.out.println(tupleAddress.fileAddress+" is not relavant");
+                    } else {
+                        System.out.println(address.fileAddress + " is not relavant");
                     }
                 }
 
                 if (isRelated) {
-                    for (TupleInfo.TupleAddress tupleAddress : tupleInfo.getAddresses()) {
-                        addressSet.add(tupleAddress.fileAddress);
+                    for (String tupleAddressStr : tupleInfo.getAddresses()) {
+                        TupleAddress address = new TupleAddress(tupleAddressStr);
+                        addressSet.add(address.fileAddress);
                     }
                     hasNewInstances = true;
                     closureSet.add(tupleInfo);
@@ -182,7 +189,7 @@ public class RelatedTupleFinder {
 
         TIntObjectHashMap<String> expandedHostMap = HostMap.loadFromIdMap(new File(expandedTuplePath));
         TIntObjectHashMap<int[]> expandedTuple2Origins = HostMap.loadSupportMap(new File(expandedTuplePath));
-        TIntObjectHashMap<TupleInfo> originTupleInfoHostMap = HostMap.loadOriginalTupleInfo(new File(originTuplePath));
+        TIntObjectHashMap<String> originTupleInfoHostMap = HostMap.loadOriginalTupleInfo(new File(originTuplePath));
 
         List<String> header = new ArrayList<String>();
         header.add("==========Generated Results=========");
@@ -223,7 +230,7 @@ public class RelatedTupleFinder {
 //            }
 //            scriptOut.add(scores);
 
-            for (int resultExpandedIndex : relatedInstances.keySet()){
+            for (int resultExpandedIndex : relatedInstances.keySet()) {
                 String expandedTuple = expandedHostMap.get(resultExpandedIndex);
                 List<TupleInfo> supportTuple = relatedInstances.get(resultExpandedIndex);
                 scriptOut.add("#=====\n" + expandedTuple + " : " + commaJoiner.join(supportTuple));
