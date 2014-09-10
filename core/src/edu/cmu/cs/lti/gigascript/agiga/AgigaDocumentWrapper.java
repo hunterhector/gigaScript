@@ -1,6 +1,6 @@
 package edu.cmu.cs.lti.gigascript.agiga;
 
-import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
+import edu.cmu.cs.lti.gigascript.model.GigaMention;
 import edu.jhu.agiga.*;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -66,12 +66,25 @@ public class AgigaDocumentWrapper {
         return documentText;
     }
 
-    public boolean sameArgument(AgigaArgument argument1, AgigaArgument argument2) {
+    public List<Set<Pair<Integer, Integer>>> getCorefChains(){
+        return corefChains;
+    }
+
+    public AgigaDocument getDocument(){
+        return document;
+    }
+
+    /**
+     * Judge whether argument are the same based on coreference (or exact the same)
+     * @param argument1
+     * @param argument2
+     * @return
+     */
+    public boolean sameArgument(GigaMention argument1, GigaMention argument2) {
         if (argument1.equals(argument2)) return true;
         else {
             for (Set<Pair<Integer, Integer>> corefChain : corefChains) {
                 if (corefChain.contains(argument1.getIndexingPair()) && corefChain.contains(argument2.getIndexingPair())) {
-//                    System.out.println("Contains "+argument1.getIndexingPair() + " "+argument2.getIndexingPair());
                     return true;
                 }
             }
@@ -79,7 +92,7 @@ public class AgigaDocumentWrapper {
         return false;
     }
 
-    public String getSemanticType(AgigaSentence sentence, AgigaToken token) {
+    private String getSemanticType(AgigaSentence sentence, AgigaToken token) {
         int index = token.getTokIdx();
 
         // trust the token's own Named Entity Tag
@@ -87,6 +100,7 @@ public class AgigaDocumentWrapper {
             return token.getNerTag().trim();
         }
 
+        //null enforce people don't compare tokens without a semantic type
         return null;
 
         // disable because coreferenced type is too noisy.
@@ -107,7 +121,6 @@ public class AgigaDocumentWrapper {
             return null;
         } else {
             String headWordType = getSemanticType(sentence, headword);
-
             //phrase type is too noisy
             return headWordType;
         }

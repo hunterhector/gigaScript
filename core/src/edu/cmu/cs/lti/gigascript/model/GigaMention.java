@@ -1,8 +1,12 @@
 package edu.cmu.cs.lti.gigascript.model;
 
+import edu.jhu.agiga.AgigaToken;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,24 +14,41 @@ import org.apache.commons.lang3.tuple.Pair;
  * Date: 2/26/14
  * Time: 1:16 AM
  */
-public class AgigaArgument {
-    private int keywordTokenIndex;
-    private int sentenceIndex;
+public class GigaMention {
+    private final int keywordTokenIndex;
+    private final int sentenceIndex;
 
     private String headWordLemma;
     private String entityType;
 
-    public AgigaArgument(int sentenceIndex, int keywordTokenIndex) {
+    private final List<AgigaToken> tokens;
+
+    public GigaMention(int sentenceIndex, int keywordTokenIndex, List<AgigaToken> tokens, String entityType){
         this.keywordTokenIndex = keywordTokenIndex;
         this.sentenceIndex = sentenceIndex;
+
+        this.tokens = new ArrayList<AgigaToken>();
+        for (AgigaToken token : tokens){
+            this.tokens.add(token);
+        }
+        this.entityType = entityType;
+    }
+
+    public GigaMention(int sentenceIndex, int keywordTokenIndex, AgigaToken token, String entityType){
+        this.tokens = new ArrayList<AgigaToken>();
+            tokens.add(token);
+
+        this.keywordTokenIndex = keywordTokenIndex;
+        this.sentenceIndex = sentenceIndex;
+        this.entityType = entityType;
+    }
+
+    public List<AgigaToken> getTokens(){
+        return tokens;
     }
 
     public int getSentenceIndex() {
         return sentenceIndex;
-    }
-
-    public void setSentenceIndex(int sentenceIndex) {
-        this.sentenceIndex = sentenceIndex;
     }
 
     public int getKeywordTokenIndex() { return keywordTokenIndex; }
@@ -41,10 +62,10 @@ public class AgigaArgument {
             return false;
         if (obj == this)
             return true;
-        if (!(obj instanceof AgigaArgument))
+        if (!(obj instanceof GigaMention))
             return false;
 
-        AgigaArgument rhs = (AgigaArgument) obj;
+        GigaMention rhs = (GigaMention) obj;
 
         return new EqualsBuilder().append(keywordTokenIndex, rhs.keywordTokenIndex).append(sentenceIndex, rhs.sentenceIndex).isEquals();
     }
@@ -55,7 +76,18 @@ public class AgigaArgument {
 
 
     public String toString(){
-        return String.format("[%s]@(%d,%d)",headWordLemma,sentenceIndex,keywordTokenIndex);
+        return String.format("[%s]@(%d,%d)",tokensToString(),sentenceIndex,keywordTokenIndex);
+    }
+
+    public String tokensToString(){
+        StringBuilder str = new StringBuilder();
+        String splitter = "";
+        for (AgigaToken token : tokens){
+            str.append(splitter);
+            str.append(token.getWord());
+            splitter = " ";
+        }
+        return str.toString();
     }
 
     public String getEntityType() {

@@ -15,7 +15,7 @@ import java.util.List;
  * Date: 5/6/14
  * Time: 12:55 PM
  */
-public class AgigaRelation {
+public class GigaRelation {
     public static String NORMAL_TYPE = "normal";
     public static String APPOSITION_TYPE = "apposition";
     public static String POSSESSIVE_TYPE = "possessive";
@@ -28,7 +28,7 @@ public class AgigaRelation {
 
     int sentenceIndex;
 
-    public AgigaRelation(AgigaSentence sent,List<Integer> indices){
+    public GigaRelation(AgigaSentence sent, List<Integer> indices){
         this.indices = indices;
         relationStr =  GeneralUtils.getNiceTupleForm(AgigaUtil.getShortenLemmaForPhrase(sent, indices));
         relationType = NORMAL_TYPE;
@@ -39,7 +39,7 @@ public class AgigaRelation {
         return keywordLemma;
     }
 
-    public AgigaRelation(String relationStr){
+    public GigaRelation(String relationStr){
         if (relationStr.equals("_is")) {
             this.relationType = APPOSITION_TYPE;
         }else if (relationStr.equals("_has")){
@@ -56,10 +56,10 @@ public class AgigaRelation {
             return false;
         if (obj == this)
             return true;
-        if (!(obj instanceof AgigaRelation))
+        if (!(obj instanceof GigaRelation))
             return false;
 
-        AgigaRelation rhs = (AgigaRelation) obj;
+        GigaRelation rhs = (GigaRelation) obj;
 
 
         boolean indiceEqual = true;

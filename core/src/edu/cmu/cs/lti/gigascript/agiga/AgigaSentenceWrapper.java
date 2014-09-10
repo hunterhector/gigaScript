@@ -1,11 +1,14 @@
 package edu.cmu.cs.lti.gigascript.agiga;
 
+import edu.cmu.cs.lti.gigascript.model.GigaMention;
+import edu.jhu.agiga.AgigaMention;
 import edu.jhu.agiga.AgigaSentence;
 import edu.jhu.agiga.AgigaToken;
 import edu.jhu.agiga.AgigaTypedDependency;
 import edu.stanford.nlp.trees.SemanticHeadFinder;
 import edu.stanford.nlp.trees.Tree;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,99 +19,110 @@ import java.util.List;
  */
 public class AgigaSentenceWrapper {
     List<AgigaTypedDependency> basicDependencies;
-//    Map<Integer, Integer> toGov = new HashMap<Integer, Integer>();
-//    Map<Integer, Integer> toDep = new HashMap<Integer, Integer>();
+
     List<AgigaToken> tokens;
     AgigaSentence sent;
     SemanticHeadFinder headFinder = new SemanticHeadFinder();
     Tree parseTree;
+    List<GigaMention> mentions;
 
     public AgigaSentenceWrapper(AgigaSentence sentence) {
-//        basicDependencies = sentence.getBasicDeps();
         tokens = sentence.getTokens();
         sent = sentence;
 
         parseTree = sent.getStanfordContituencyTree();
-//        System.out.println(parseTree.headTerminal(headFinder).nodeString());
-//        System.out.println(parseTree.headTerminal(headFinder).label());
-
-//        for (AgigaTypedDependency dep : basicDependencies) {
-//            toGov.put(dep.getDepIdx(), dep.getGovIdx());
-//            toDep.put(dep.getGovIdx(), dep.getDepIdx());
-//        }
+        mentions = createMentions();
     }
 
-//    public void dfs(Tree node, Tree parent) {
-//        if (node == null || node.isLeaf()) {
-//            return;
-//        }
-//        //if node is a NP - Get the terminal nodes to get the words in the NP
-//        if(node.value().equals("NP") ) {
-//            System.out.println(" Noun Phrase is ");
-//            List<Tree> leaves = node.getLeaves();
-//
-//            for(Tree leaf : leaves) {
-//                System.out.print(leaf.toString()+" ");
-//            }
-//            System.out.println();
-//
-//            System.out.println(" Head string is ");
-//            System.out.println(node.headTerminal(headFinder, parent));
-//        }
-//
-//        for(Tree child : node.children()) {
-//            dfs(child, node);
-//        }
-//    }
+    private List<GigaMention> createMentions() {
+        List<GigaMention> mentions = new ArrayList<GigaMention>();
 
-//    private AgigaToken toGov(AgigaToken token) {
-//        int govIdx = toGov.get(token.getTokIdx());
-//        return govIdx == -1 ? null : tokens.get(govIdx);
-//    }
-//
-//    private AgigaToken toDep(AgigaToken token) {
-//        int depIdx = toDep.get(token.getTokIdx());
-//        return depIdx == -1 ? null : tokens.get(depIdx);
-//    }
+        List<AgigaToken> mentionTokens = new ArrayList<AgigaToken>();
+        String previousTag = "O";
+        for (AgigaToken token : tokens) {
+            String tag = token.getNerTag();
+//            System.out.println(previousTag + " " + tag);
+
+            if (tag.equals("O") && !previousTag.equals("O")) { //E O
+                GigaMention mention = new GigaMention(sent.getSentIdx(), getHeadWordIndexFromTokens(mentionTokens), mentionTokens, tag);
+                mentions.add(mention);
+//                System.out.println(mention.tokensToString());
+                mentionTokens = new ArrayList<AgigaToken>();
+            } else { // EE, OE, OO
+                if (!tag.equals("O")) { //EE, OE
+                    if (previousTag.equals("O")){ //OE
+//                        System.out.println("Adding to tag(OE): "+tag+" " + token.getWord());
+                    }else if (previousTag.equals(tag)){ //EE1
+//                        System.out.println("Adding to tag(EE): "+tag+" " + token.getWord());
+                    }else{//EE2
+                        GigaMention mention = new GigaMention(sent.getSentIdx(), getHeadWordIndexFromTokens(mentionTokens), mentionTokens, tag);
+                        mentions.add(mention);
+//                        System.out.println(mention.tokensToString());
+                        mentionTokens = new ArrayList<AgigaToken>();
+                    }
+
+                    mentionTokens.add(token);
+
+                }
+            }
+            previousTag = tag;
+        }
+        if (!previousTag.equals("O")) {
+            GigaMention mention = new GigaMention(sent.getSentIdx(), getHeadWordIndexFromTokens(mentionTokens), mentionTokens, previousTag);
+            mentions.add(mention);
+//            System.out.println(mention.tokensToString());
+        }
+
+
+        return mentions;
+    }
+
+    public List<GigaMention> getMentions() {
+        return mentions;
+    }
+
+    public GigaMention convertMention(AgigaMention agigaMention) {
+        if (agigaMention.getSentenceIdx() != sent.getSentIdx()) {
+            throw new IllegalArgumentException("Mention not in this sentence");
+        }
+
+        for (GigaMention mention : mentions) {
+            if (mention.getKeywordTokenIndex() == agigaMention.getHeadTokenIdx()) {
+                return mention;
+            }
+        }
+
+        List<AgigaToken> mentionTokens = getMentionTokens(agigaMention);
+
+        return new GigaMention(sent.getSentIdx(), getHeadWordIndexFromTokens(mentionTokens), mentionTokens, null);
+    }
 
     public List<AgigaToken> getTokens() {
         return tokens;
     }
 
-    public int getHeadWordIndex(List<Integer> indices) {
-//        if (indices.size() < 2) {
-//            return indices.get(0);
-//        } else {
-//            int headPosition = 0;
-//            int headNode = indices.get(headPosition);
-//
-//            while (headPosition < indices.size()-1) {
-//                if (toDep.containsKey(headNode)) {
-//                    boolean hasParent = false;
-//                    for (int i = 1; i < indices.size(); i++) {
-//                        int node = indices.get(i);
-//                        if (toDep.get(headNode) == node) {
-//                            //update head position
-//                            headPosition = i;
-//                            headNode = toDep.get(headPosition);
-//                            hasParent = true;
-//                            break;
-//                        }
-//                    }
-//                    if (!hasParent){
-//                        return headNode;
-//                    }
-//                } else {
-//                    return headNode;
-//                }
-//            }
-//            return headNode;
-//        }
+    public int getHeadWordIndexFromTokens(List<AgigaToken> mentionTokens) {
+        List<Integer> indices = new ArrayList<Integer>();
+        for (AgigaToken token : mentionTokens) {
+            indices.add(token.getTokIdx());
+        }
+        return getHeadWordIndex(indices);
+    }
 
+    public List<AgigaToken> getMentionTokens(AgigaMention mention) {
+        List<AgigaToken> indices = new ArrayList<AgigaToken>();
+        for (int i = mention.getStartTokenIdx(); i < mention.getEndTokenIdx(); i++) {
+            indices.add(tokens.get(i));
+        }
+        return indices;
+    }
+
+
+    public int getHeadWordIndex(List<Integer> indices) {
         int firstIndex = indices.get(0);
 //        AgigaToken firstToken = tokens.get(firstIndex);
 
-        for (int i =0;i<indices.size();i++) {
+        for (int i = 0; i < indices.size(); i++) {
             int index = indices.get(i);
             String pos = tokens.get(index).getPosTag();
 
@@ -136,6 +150,16 @@ public class AgigaSentenceWrapper {
             str += " ";
         }
         return str;
+    }
+
+    private String getSemanticType(AgigaToken token) {
+        // trust the token's own Named Entity Tag
+        if (!token.getNerTag().equals("O") && !token.getNerTag().equals("")) {
+            return token.getNerTag().trim();
+        }
+
+        //null enforce people don't compare tokens without a semantic type
+        return null;
     }
 
 }

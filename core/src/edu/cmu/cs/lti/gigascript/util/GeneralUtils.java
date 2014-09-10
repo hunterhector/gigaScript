@@ -1,8 +1,8 @@
 package edu.cmu.cs.lti.gigascript.util;
 
 import edu.cmu.cs.lti.gigascript.agiga.AgigaSentenceWrapper;
-import edu.cmu.cs.lti.gigascript.model.AgigaArgument;
-import edu.cmu.cs.lti.gigascript.model.AgigaRelation;
+import edu.cmu.cs.lti.gigascript.model.GigaMention;
+import edu.cmu.cs.lti.gigascript.model.GigaRelation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -61,10 +61,10 @@ public class GeneralUtils {
         return obj == null ? "-" : obj.toString().trim();
     }
 
-    public static boolean tupleFilter(Triple<AgigaArgument, AgigaArgument, AgigaRelation> tuple, AgigaSentenceWrapper sentWrapper) {
-        AgigaRelation aRelation = tuple.getRight();
-        AgigaArgument arg0 = tuple.getLeft();
-        AgigaArgument arg1 = tuple.getMiddle();
+    public static boolean tupleFilter(Triple<GigaMention, GigaMention, GigaRelation> tuple, AgigaSentenceWrapper sentWrapper) {
+        GigaRelation aRelation = tuple.getRight();
+        GigaMention arg0 = tuple.getLeft();
+        GigaMention arg1 = tuple.getMiddle();
 
         int headWordIndex0 = arg0.getKeywordTokenIndex();
         int headWordIndex1 = arg1.getKeywordTokenIndex();

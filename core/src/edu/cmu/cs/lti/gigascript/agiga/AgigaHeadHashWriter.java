@@ -33,7 +33,7 @@ public class AgigaHeadHashWriter {
         AgigaPrefs prefs = new AgigaPrefs();
         prefs.setAll(true);
 
-        boolean consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode").equals("console");
+        String consoleMode = config.get("edu.cmu.cs.lti.gigaScript.console.mode");
 
         String outputPath = config.get("edu.cmu.cs.lti.gigaScript.plain.out.path");
 
@@ -96,13 +96,15 @@ public class AgigaHeadHashWriter {
                 writer.write(hashtext+" "+doc.getDocId());
                 writer.write("\n");
 
-                if (consoleMode) {
+                if (consoleMode.equals("console")) {
                     //nice progress view when we can view it in the console
                     System.out.print("\r" + reader.getNumDocs());
-                } else {
+                } else if (consoleMode.equals("file")){
                     if (reader.getNumDocs() % 500 == 0)
                         //this will be more readable if we would like to direct the console output to file
                         System.out.print(reader.getNumDocs() + " ");
+                }else{
+                    //just keep quiet
                 }
             }
 
