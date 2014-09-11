@@ -24,6 +24,8 @@
     <orderEntry type="library" name="common" level="project" />
     <orderEntry type="library" name="wn" level="project" />
     <orderEntry type="library" name="srl" level="project" />
+    <orderEntry type="library" name="graph" level="project" />
+    <orderEntry type="library" name="misc" level="project" />
   </component>
 </module>
 

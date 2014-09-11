@@ -1,7 +1,7 @@
 package edu.cmu.cs.lti.gigascript.model;
 
-import com.google.common.collect.HashBasedTable;
-import edu.jhu.agiga.AgigaToken;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,21 +10,29 @@ import edu.jhu.agiga.AgigaToken;
  * Time: 12:28 AM
  */
 public class GigaDocument {
-    private final HashBasedTable<GigaEntity,AgigaToken,String> entityWithRoles;
+
+    private List<GigaEntity> entities = new ArrayList<GigaEntity>();
 
     private final String docId;
 
-    public GigaDocument(String docId, HashBasedTable<GigaEntity,AgigaToken,String> entityWithRoles){
-        this.entityWithRoles = entityWithRoles;
+    public GigaDocument(String docId){
         this.docId = docId;
     }
 
-    public HashBasedTable<GigaEntity,AgigaToken,String> getEntityWithRoles(){
-        return entityWithRoles;
+    public void addEntity(GigaEntity entity){
+        entities.add(entity);
+    }
+
+    public List<GigaEntity> getEntities(){
+        return entities;
     }
 
     public String getDocId(){
         return  docId;
+    }
+
+    public boolean isEmpty(){
+        return entities.isEmpty();
     }
 
 }

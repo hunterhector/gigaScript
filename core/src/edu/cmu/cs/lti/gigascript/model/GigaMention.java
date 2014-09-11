@@ -23,6 +23,8 @@ public class GigaMention {
 
     private final List<AgigaToken> tokens;
 
+    private boolean isRepresantative = false;
+
     public GigaMention(int sentenceIndex, int keywordTokenIndex, List<AgigaToken> tokens, String entityType){
         this.keywordTokenIndex = keywordTokenIndex;
         this.sentenceIndex = sentenceIndex;
@@ -90,6 +92,14 @@ public class GigaMention {
         return str.toString();
     }
 
+    public List<String> getTokenStrs(){
+        List<String> tokenStrs = new ArrayList<String>();
+        for (AgigaToken token : tokens){
+            tokenStrs.add(token.getWord());
+        }
+        return tokenStrs;
+    }
+
     public String getEntityType() {
         return entityType;
     }
@@ -104,5 +114,13 @@ public class GigaMention {
 
     public void setHeadWordLemma(String headWordLemma) {
         this.headWordLemma = headWordLemma;
+    }
+
+    public boolean isRepresantative() {
+        return isRepresantative;
+    }
+
+    public void setRepresantative(boolean isRepresantative) {
+        this.isRepresantative = isRepresantative;
     }
 }
